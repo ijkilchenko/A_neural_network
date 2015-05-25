@@ -55,3 +55,35 @@ docs/_build/
 
 # PyBuilder
 target/
+
+##########################
+#Linux Specific GitIgnore#
+##########################
+.*
+!.gitignore
+*~
+*.sw[a-p]
+ 
+# KDE
+.directory
+ 
+############################
+#Eclipse Specific GitIgnore#
+############################
+*.pydevproject
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+ 
+# CDT-specific
+.cproject
