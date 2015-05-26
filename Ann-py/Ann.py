@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.matlib as mp
 import math
+import random
 
 class Example(object):
     '''(Numeric) array and label class (for convenience)'''    
@@ -18,41 +19,65 @@ class Ann(object):
     '''Feed-forward neural network with arbitrary architecture'''    
     def __init__(self, *args, **kwargs):
         self.min = 2 * 10 ** (-308)  # Use this as minimum value (without underflow) bigger than 0
-        
-        '''Constructor checks if architecture is defined in kwargs, else list of examples and labels is used to define architecture'''
-        self.examples = []
-        if (len(args) == 0):
-            self.n_i = kwargs['n_i']  # Number of input neurons
-            self.n_h = kwargs['n_h']  # Number of hidden layers
-            self.n_o = kwargs['n_o']  # Number of output neurons
-        else:
-            (arrs, labels) = args
-            if (len(arrs) != len(labels)):
-                print('Number of examples do not match the number of labels')
-                return
+        s = []  # Architecture vector is initially undefined
+        '''Constructor checks if model is passed (assumes if only one argument is passed, then it is the model)'''
+        if (len(args) == 1):
+            model = args[0]
+            '''Make sense of the model'''
+            shape_1 = model.Thetas[0].shape
+            self.n_i = shape_1[1] - 1
+            self.L = len(model.Thetas) + 1
+            s = []
+            for l in range(0, self.L - 2):  # For each hidden layer
+                num = model.Thetas[l].shape[1]
+                s.append(num + 1)
+            shape_L = model.Thetas[len(model.Thetas) - 1]
+            self.n_o = shape_L[1]  # Note: there is no bias for the output layer
+        else:           
+            '''Constructor checks if architecture is defined in kwargs, else list of train_examples and labels is used to define architecture'''
+            self.train_examples = []
+            self.test_examples = []
+            if (len(args) == 0):
+                self.n_i = kwargs['n_i']  # Number of input neurons
+                self.n_h = kwargs['n_h']  # Number of hidden layers
+                self.n_o = kwargs['n_o']  # Number of output neurons
             else:
-                '''Makes an array for each label (assumes string labels)'''
-                dimension = len(arrs[0])
-                self.m = len(arrs)
-                self.classes = []
-                for x in range(0, len(arrs)):
-                    if (labels[x] not in self.classes):
-                        self.classes.append(labels[x])
-                for x in range(0, len(arrs)):
-                    y = [0] * len(self.classes)
-                    y[self.classes.index(labels[x])] = 1
-                    ex = Example(arrs[x], y, labels[x])
-                    self.examples.append(ex)
-                    
-                if (len(kwargs.keys()) != 0):
-                    self.n_h = kwargs['n_h']  # Number of hidden layers
+                t = args
+                (arrs, labels) = (t[0], t[1])
+                if (len(arrs) != len(labels)):
+                    print('Number of train_examples do not match the number of labels!')
+                    return
                 else:
-                    self.n_h = 2  # Default to 2 hidden layers
-                self.n_i = dimension
-                self.n_o = len(self.classes) 
-                self.K = len(self.classes)  # Number of different labels (number of classes)
-        
-        self.init_architecture() 
+                    '''Makes an array for each label (assumes string labels)'''
+                    dimension = len(arrs[0])
+                    self.classes = []
+                    for x in range(0, len(arrs)):
+                        if (labels[x] not in self.classes):
+                            self.classes.append(labels[x])
+                    '''If there are at least 10 examples, do a 90-10 random split into train and test'''
+                    if (len(arrs) >= 10):
+                        l = random.sample(range(0, len(arrs)), math.floor(len(arrs) / 10))
+                    for x in range(0, len(arrs)):
+                        y = [0] * len(self.classes)
+                        y[self.classes.index(labels[x])] = 1
+                        ex = Example(arrs[x], y, labels[x])
+                        if (len(arrs) >= 10 and x in l):
+                            self.test_examples.append(ex)
+                        else:
+                            self.train_examples.append(ex)
+                        
+                    if (len(kwargs.keys()) != 0):
+                        self.n_h = kwargs['n_h']  # Number of hidden layers
+                    else:
+                        self.n_h = 2  # Default to 2 hidden layers
+                    self.n_i = dimension
+                    self.n_o = len(self.classes)  # Number of different labels (number of classes)
+        if ('s' in kwargs.keys()):
+            s = kwargs['s']
+        self.init_architecture(s)
+        if (len(args) == 1):
+            '''Load Thetas from the model if model was passed (overwrite random initializations)'''
+            self.Thetas = model.Thetas
         
         '''Our non-linear function (sigmoid) mapping z to (0, 1)'''
         def g(z):
@@ -63,22 +88,28 @@ class Ann(object):
                 return 1 / (1 + math.exp(-z))
         self.g = np.vectorize(g)
         
-    def init_architecture(self):
+    def init_architecture(self, s):
         self.L = 1 + self.n_h + 1  # Total number of layers
-                
-        '''Calculate number of neurons in each layer (using own heuristic)'''
-        self.s = [0] * self.L  # Will hold number of neurons (including hidden) in each layer
-        for l in range(0, self.L):
-            if (l == 0):
-                self.s[l] = int(self.n_i + 1)  # Inputs plus 1 bias
-            if (l > 0 and l < self.L - 1):
-                '''Grow number of hidden neurons logarithmically after 10'''
-                if (self.n_i <= 10):
-                    self.s[l] = int(self.n_i + 1) 
-                else:
-                    self.s[l] = int(math.floor(10 * math.log10(self.n_i)) + 1)
-            if (l == self.L - 1):
-                self.s[l] = int(self.n_o + 1)  # Adding bias to output layer (for convenience) 
+        # len(s) == 0 is true when we did not define a hidden layer architecture explicitly
+        self.s = []
+        if (len(s) == 0):
+            '''Calculate number of neurons in each layer (using own heuristic)'''
+            self.s = [0] * self.L  # Will hold number of neurons (including hidden) in each layer
+            for l in range(0, self.L):
+                if (l == 0):
+                    self.s[l] = int(self.n_i + 1)  # Inputs plus 1 bias
+                if (l > 0 and l < self.L - 1):
+                    '''Grow number of hidden neurons logarithmically after 10'''
+                    if (self.n_i <= 10):
+                        self.s[l] = int(self.n_i + 1) 
+                    else:
+                        self.s[l] = int(math.floor(10 * math.log10(self.n_i)) + 1)
+                if (l == self.L - 1):
+                    self.s[l] = int(self.n_o + 1)  # Adding bias to output layer (for convenience) 
+        else:
+            self.s.append(int(self.n_i + 1))  # Inputs plus 1 bias)
+            self.s.extend(s)  # Add the defined hidden layer architecture (1 neuron per layer will be treated as bias)
+            self.s.append(int(self.n_o + 1))
         
         '''Initialize all neuron weights randomly between -1 and 1'''
         self.Thetas = []  # Will hold L-1 matrices
@@ -99,21 +130,39 @@ class Ann(object):
         a = self.forward(x)
         return a[len(a) - 1]
     
-    def cost(self):
+    def cost(self, **kwargs):
         cost = 0
-        for example in self.examples:
+        if (len(kwargs.keys()) == 0):
+            lam = 0
+        else:
+            lam = kwargs['lam']
+        for example in self.train_examples:
             h = self.h(example.arr)
             y = example.y
             for k in range(0, len(self.classes)):
                 # Guard against math domain error (log(0) is undefined)
                 cost += y[k] * math.log(h[k] + self.min) + (1 - y[k]) * math.log(1 - h[k] + self.min)
-        return -cost / self.m
+        S = 0
+        if (lam != 0):
+            # Regularization
+            for l in range(0, self.L - 1):
+                S += np.sum(np.multiply(self.Thetas[l], self.Thetas[l]))                                       
+        return -cost / len(self.train_examples) + S * lam / (2 * len(self.train_examples))
     
-    def accuracy(self):
-        '''Returns a percentage of all examples to which the label is the same as which the neural network gave the highest confidence to'''
+    def train_accuracy(self):
+        '''Returns a percentage of correctly classified train examples by neural network'''
+        return self.accuracy(self.train_examples)
+    
+    def test_accuracy(self):
+        if (len(self.test_examples) < 1):
+            print('There are 0 test examples!')
+        else:
+            return self.accuracy(self.test_examples)
+    
+    def accuracy(self, examples):
         num_correct = 0
-        for ex in self.examples:
-            confidences = self.answer_with_confidences(ex.arr)
+        for ex in examples:
+            confidences = self.h_with_confidences(ex.arr)
             y = ex.y
             answer_index = 0
             best_confidence = 0
@@ -123,73 +172,117 @@ class Ann(object):
                     answer_index = c
             if (y[answer_index] == 1):
                 num_correct += 1
-        return num_correct / self.m
+        return num_correct / len(examples)
     
     def validate(self):
-        for ex in self.examples:
-            print(ex.arr, self.answer(ex))
+        '''Just prints all train examples (vectors) and their classification by the neural network and their expected classification'''
+        for ex in self.train_examples:
+            print(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
     
-    def answer(self, x):
-        confidences = self.answer_with_confidences(x.arr)
-        answer_index = 0
+    def h_by_class(self, x):
+        '''This function can be used when Ann is initialized with a model only (no examples)'''
+        confidences = self.h_with_confidences(x)
+        class_index = 0
         best_confidence = 0
         for c in range(0, len(confidences)):
             if (confidences[c] > best_confidence):
                 best_confidence = confidences[c]
-                answer_index = c
-        return self.classes[answer_index]
+                class_index = c
+        return self.classes[class_index]
        
-    def answer_with_confidences(self, x):
+    def h_with_confidences(self, x):
         '''Interpretation of the output activation vector in terms of probabilities (sum of all elements is 1)'''
+        '''This function can be used when Ann is initialized with a model only (no examples)'''
         a = self.h(x)
         s = 0
         for i in a:
             s += i
         a = a / s
         return a
-    
 
-    def backward_all(self):
+    def backward_all(self, **kwargs):
+        if (len(kwargs.keys()) == 0):
+            lam = 0
+        else:
+            lam = kwargs['lam']
         D = []
         for l in range(0, self.L - 1):
             shape = self.Thetas[l].shape
             d = np.zeros(shape)
             D.append(d)
         
-        for ex in self.examples:  # L-1 (Jacobian) matrices (matrices of partial derivatives of for each element in Thetas)
+        for ex in self.train_examples:  # L-1 (Jacobian) matrices (matrices of partial derivatives of for each element in Thetas)
             Js = self.backward(ex.arr, ex.y)
             # Accumulate all partial derivatives in D
             for l in range(0, self.L - 1):
                 D[l] += Js[l]
         
         for l in range(0, self.L - 1):
-            D[l] = D[l] / self.m  # Average the accumulated partial derivatives by number of examples
+            # Average the accumulated partial derivatives by number of train_examples
+            D[l] = D[l] / len(self.train_examples) + lam * self.Thetas[l] / len(self.train_examples)  # Regularization term
         
         return D
-
-    def train(self):
-        '''Convex optimization (full-batch gradient descent)'''
-        it = 10000  # Maximum number of iterations
-        tol = 0.000001  # If iteration gave less than tol decrease in cost, then stop
-        step = 5  # Gradient descent step size
-        
-        print('\tStarting accuracy ' + str(self.accuracy()))
-        for i in range(0, it):
-            cost_before = self.cost()
-            if (i % 10 == 0):
-                print('Iteration ' + str(i) + '. Cost: ' + str(cost_before))
+    
+    def train(self, **kwargs):
+        if ('lam' in kwargs.keys() or len(self.test_examples) == 0):
+            if (len(kwargs.keys()) == 0):
+                lam = 0
+            else:
+                lam = kwargs['lam']
+            # If there are no test examples, just set lam = 0 and do not regularize
+            print('\n')
+            print('Starting train accuracy ' + str(self.train_accuracy()))
+            model = self.train_with_lam(lam)
+            print('Ending train accuracy ' + str(self.train_accuracy()))
+            print('\n')
+            return model
+        else:
+            ''' Do a search for the best regularization parameter lam in the interval (lam_min, lam_max)'''
+            lam_min = 0
+            lam_max = 1
+            lam_num = 2
             
-            D = self.backward_all()
+            test_accuracies = []
+            test_costs = []
+            
+            steps = list(np.linspace(lam_min, lam_max, lam_num))
+            for lam in steps:
+                print('\n')
+                print('Setting lambda=' + str(lam))
+                print('Starting test accuracy=' + str(self.test_accuracy()))
+                print('Starting train accuracy ' + str(self.train_accuracy()))
+                self.train_with_lam(lam)
+                t = self.test_accuracy()
+                print('Ending test accuracy=' + str(t))
+                print('Ending train accuracy ' + str(self.train_accuracy()))
+                test_accuracies.append(t)
+                test_costs.append(self.cost(lam=lam))
+                print('\n')
+                
+    def train_with_lam(self, lam):
+        '''Convex optimization (full-batch gradient descent)'''
+        it = 3000  # Maximum number of iterations
+        tol = 0.00001  # If iteration gave less than tol decrease in cost, then stop
+        step = 3  # Gradient descent step size
+        print('\tMaximum number of iterations: ' + str(it))
+        print('\tTolerance: ' + str(tol))
+        print('\tGradient descent step size: ' + str(step))
+        
+        for i in range(0, it):
+            cost_before = self.cost(lam=lam)
+            if (i % 100 == 0):
+                print('\tIteration ' + str(i) + '. Cost: ' + str(cost_before))
+            
+            D = self.backward_all(lam=lam)
             for l in range(0, self.L - 1):
                 self.Thetas[l] = self.Thetas[l] - step * D[l]  # Take a step down the gradient (of the cost function)
             
-            cost_after = self.cost()
+            cost_after = self.cost(lam=lam)
             
             if (abs(cost_before - cost_after) < tol):
                 break
                     
-        print('Final cost: ' + str(cost_after) + ' (after ' + str(i + 1) + ' iterations)')
-        print('\tEnding accuracy ' + str(self.accuracy()))
+        print('\tFinal cost: ' + str(cost_after) + ' (after ' + str(i + 1) + ' iterations)')
         
         model = Model(self.Thetas)
         return model

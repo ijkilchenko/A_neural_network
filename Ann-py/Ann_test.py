@@ -7,16 +7,49 @@ import copy
 class Test(unittest.TestCase):
     
     def test_all(self):
-        ''' The A(lex) Neural Network tests '''
+        ''' The A(lex) Neural Network tests (each sample_test is independent of others and order independent)'''
         # self.sample_test_1()
         # self.sample_test_2()
         # self.sample_test_3()
         # self.sample_test_4()
-        # self.sample_test_5()
-        # self.sample_test_6() # Takes over 10 minutes to run
-        # self.sample_test_7()
+        # self.sample_test_5()  # Takes over a minute to run
+        # self.sample_test_6()  # Takes over 10 minutes to run
+        self.sample_test_7()
+        # self.sample_test_8()
         
-        ''' Comprehensive data-set tests '''
+        ''' Good fake data-set tests '''
+        # self.sample_test_9()  # Takes about 10 hours to run
+        
+    def sample_test_9(self):
+        '''Creates a fake data-set with points labeled 'yes' around origin and points labeled 'no' outside'''
+        arrs = []
+        labels = []
+        '''Points about the origin (located in a box of length 16 centered at origin)'''
+        for i in range(0, 100):
+            arr = [random.randint(0, 8) * np.sign(random.random() - 0.5) for x in range(0, 10)]
+            label = 'yes'
+            arrs.append(arr)
+            labels.append(label)
+        '''Points outside the box'''
+        for i in range(0, 100):
+            arr = [random.randint(10, 20) * np.sign(random.random() - 0.5) for x in range(0, 10)]
+            label = 'no'
+            arrs.append(arr)
+            labels.append(label)
+        '''Add some noise'''
+        for i in range(0, 10):
+            arr = [random.randint(0, 8) * np.sign(random.random() - 0.5) for x in range(0, 10)]
+            label = 'no'  # Note: this is artificially misclassified
+            arrs.append(arr)
+            labels.append(label)
+        for i in range(0, 10):
+            arr = [random.randint(10, 20) * np.sign(random.random() - 0.5) for x in range(0, 10)]
+            label = 'yes'  # Note: this is artificially misclassified
+            arrs.append(arr)
+            labels.append(label)
+            
+        ann = Ann(arrs, labels, n_h=2)
+        ann.train()
 
     def sample_test_1(self):
         # Test for Ann Architecture#
@@ -82,6 +115,22 @@ class Test(unittest.TestCase):
         self.assertEqual(ann4.Thetas[1].shape, (31, 32))
         self.assertEqual(ann4.Thetas[2].shape, (31, 32))
         self.assertEqual(ann4.Thetas[3].shape, (6, 32))
+        
+        # Fourth (arbitrary) architecture test#
+        s = [3, 2]
+        n_i = 4
+        n_h = len(s)
+        n_o = 2
+        ann1 = Ann(s=s, n_i=n_i, n_h=n_h, n_o=n_o)  # Create this architecture
+        self.assertEqual(n_i, ann1.n_i)
+        self.assertEqual(n_h, ann1.n_h)
+        self.assertEqual(n_o, ann1.n_o)
+        
+        self.assertEqual(ann1.s, [5, 3, 2, 3])
+        self.assertEqual(len(ann1.Thetas), 3)
+        self.assertEqual(ann1.Thetas[0].shape, (2, 5))
+        self.assertEqual(ann1.Thetas[1].shape, (1, 3))
+        self.assertEqual(ann1.Thetas[2].shape, (2, 2))
 
     def sample_test_2(self):
         # Test for forward-propagation#
@@ -211,8 +260,8 @@ class Test(unittest.TestCase):
         labels = []
         arrs.append([1, 2, 4, 5, 5, 5])
         labels.append('cat')
-        ann = Ann(arrs, labels, n_h=10)  # Create Ann with these examples and labels
-        J = ann.backward(ann.examples[0].arr, ann.examples[0].y)
+        ann = Ann(arrs, labels, n_h=10)  # Create Ann with these train_examples and labels
+        J = ann.backward(ann.train_examples[0].arr, ann.train_examples[0].y)
         T_original = copy.deepcopy(ann.Thetas)
         
         for l in range(0, ann.L - 1):
@@ -237,7 +286,7 @@ class Test(unittest.TestCase):
                     self.assertAlmostEqual(P, J_ij, delta=0.001)
                     ann.Thetas = copy.deepcopy(T_original)
         
-        # Second data-set with several examples
+        # Second data-set with several train_examples
         arrs = []
         labels = []
         classes = ('cat', 'dog')
@@ -246,7 +295,7 @@ class Test(unittest.TestCase):
             label = classes[random.random() > 0.5]
             arrs.append(arr)
             labels.append(label)
-        ann = Ann(arrs, labels, n_h=2)  # Create Ann with these examples and labels
+        ann = Ann(arrs, labels, n_h=2)  # Create Ann with these train_examples and labels
         # L-1 matrices of partial derivatives for first example
         J = ann.backward_all()
         T_original = copy.deepcopy(ann.Thetas)
@@ -254,8 +303,10 @@ class Test(unittest.TestCase):
         for l in range(0, ann.L - 1):
             shape_J = J[l].shape
             eps = 0.0001  # epsilon for a numerical approximation of the gradient
-            for i in range(0, shape_J[0]):
-                for j in range(0, shape_J[1]):
+            a = random.sample(range(0, shape_J[0]), 2)
+            b = random.sample(range(0, shape_J[1]), 2)
+            for i in a:
+                for j in b:
                     T_e = np.zeros(shape_J)  # Matrix of zeros
                     T_e[i][j] = eps
                     ann.Thetas[l] = T_original[l] + T_e
@@ -275,7 +326,58 @@ class Test(unittest.TestCase):
                     
     def sample_test_5(self):
         # Comprehensive gradient checking #
-        pass
+        
+        # Medium size data-set with more than two classes
+        arrs = []
+        labels = []
+        classes = ('cat', 'dog', 'bird', 'turtle', 'dinosaur', 'human')
+        for m in range(0, 100):
+            arr = [random.random() for x in range(0, 200)]
+            z = random.random()
+            if (z < 1 / 6):
+                label = classes[0]
+            elif (z >= 1 / 6 and z < 2 / 6):
+                label = classes[1]
+            elif (z >= 2 / 6 and z < 3 / 6):
+                label = classes[2]
+            elif (z >= 3 / 6 and z < 4 / 6):
+                label = classes[3]
+            elif (z >= 4 / 6 and z < 5 / 6):
+                label = classes[4]   
+            else:
+                label = classes[5]
+            arrs.append(arr)
+            labels.append(label)
+        ann = Ann(arrs, labels, n_h=2)  # Create Ann with these train_examples and labels
+        # L-1 matrices of partial derivatives for first example
+        J = ann.backward_all()
+        T_original = copy.deepcopy(ann.Thetas)
+        
+        # Just check the neuron connections between first, second, and third layer
+        for l in range(0, 2):
+            shape_J = J[l].shape
+            eps = 0.0001  # epsilon for a numerical approximation of the gradient
+            # Randomly select 100 neuron connections to check
+            a = random.sample(range(0, shape_J[0]), 10)
+            b = random.sample(range(0, shape_J[1]), 10)
+            for i in a:
+                for j in b:
+                    T_e = np.zeros(shape_J)  # Matrix of zeros
+                    T_e[i][j] = eps
+                    ann.Thetas[l] = T_original[l] + T_e
+                    cost_e = ann.cost()  # Cost at Theta + eps
+                    ann.Thetas[l] = T_original[l] - T_e
+                    cost_minus_e = ann.cost()  # Cost at Theta - eps
+                    P = (cost_e - cost_minus_e) / (2 * eps)  # Numerical approximation
+                    J_ij = J[l].item(i, j)  # Backpropagation derivation
+                    
+                    print(P, '\t', J_ij, '\t', abs(P - J_ij), (l, i, j))
+                    
+                    # if (P < 0 and J_ij > 0 or P > 0 and J_ij < 0):
+                    #    self.fail()
+                    
+                    self.assertAlmostEqual(P, J_ij, delta=0.001)
+                    ann.Thetas = copy.deepcopy(T_original)
             
     def sample_test_6(self):
         # Test if training works by checking that training lowers the cost for random small and medium size data-sets#
@@ -284,14 +386,14 @@ class Test(unittest.TestCase):
         arrs = []
         labels = []
         classes = ('cat', 'dog')
-        for i in range(0, 10):
+        for i in range(0, 2):
             print('\nTesting data-set ' + str(i))
             for m in range(0, 10):
                 arr = [random.random() for x in range(0, 5)]
                 label = classes[random.random() > 0.5]
                 arrs.append(arr)
                 labels.append(label)
-            ann = Ann(arrs, labels)  # Create Ann with these examples and labels
+            ann = Ann(arrs, labels)  # Create Ann with these train_examples and labels
             cost_before = ann.cost()
             ann.train()
             cost_after = ann.cost()
@@ -314,7 +416,7 @@ class Test(unittest.TestCase):
                     label = classes[2]
                 arrs.append(arr)
                 labels.append(label)
-            ann = Ann(arrs, labels)  # Create Ann with these examples and labels
+            ann = Ann(arrs, labels)  # Create Ann with these train_examples and labels
             cost_before = ann.cost()
             ann.train()
             cost_after = ann.cost()
@@ -339,10 +441,10 @@ class Test(unittest.TestCase):
         ann = Ann(arrs, labels, n_h=0)
         ann.train()
         ann.validate()
-        # Check to see if accuracy is over 90%
-        self.assertTrue(ann.accuracy() > 0.9)
+        # Check to see if train_accuracy is over 90%
+        self.assertTrue(ann.train_accuracy() > 0.9)
         
-        # function 2 on 1 hidden layers
+        # function 2 on 2 hidden layers
         arrs = []
         arrs.append([1, 1])
         arrs.append([2, 2])
@@ -364,8 +466,8 @@ class Test(unittest.TestCase):
         ann = Ann(arrs, labels, n_h=2)
         ann.train()
         ann.validate()
-        # Check to see if accuracy is over 90%
-        self.assertTrue(ann.accuracy() > 0.9)
+        # Check to see if train_accuracy is over 90%
+        self.assertTrue(ann.train_accuracy() > 0.9)
         
         # Non-linearly-separable data-sets#
         
@@ -383,8 +485,26 @@ class Test(unittest.TestCase):
         ann = Ann(arrs, labels, n_h=1)
         ann.train()
         ann.validate()
-        # Check to see if accuracy is over 90%
-        self.assertTrue(ann.accuracy() > 0.9)
+        # Check to see if train_accuracy is over 90%
+        self.assertTrue(ann.train_accuracy() > 0.9)
+        
+        # function 1b (XOR function) on 1 hidden layers (with custom architecture)
+        arrs = []
+        arrs.append([0, 0])
+        arrs.append([0, 1])
+        arrs.append([1, 0])
+        arrs.append([1, 1])
+        labels = []
+        labels.append('false')
+        labels.append('true')
+        labels.append('true')
+        labels.append('false')
+        s = [10, 11, 10]  # Custom hidden layer architecture
+        ann = Ann(arrs, labels, n_h=len(s), s=s)
+        ann.train()
+        ann.validate()
+        # Check to see if train_accuracy is over 90%
+        self.assertTrue(ann.train_accuracy() > 0.9)
         
         # function 1 (two nested sets) on 2 hidden layers
         arrs = []
@@ -408,12 +528,71 @@ class Test(unittest.TestCase):
         ann = Ann(arrs, labels, n_h=2)
         ann.train()
         ann.validate()
-        # Check to see if accuracy is over 90%
-        self.assertTrue(ann.accuracy() > 0.9)
+        # Check to see if train_accuracy is over 90%
+        self.assertTrue(ann.train_accuracy() > 0.9)
         
     def sample_test_8(self):
-        # Large data-set test
-        pass
+        # First test#
+        # 1 hidden layer cost test with regularization#       
+        x1 = [1, 2, 3, 4]  # Array as first example
+        y1 = 'yes'
+        arrs = []
+        labels = []
+        arrs.append(x1)
+        labels.append(y1)
+        ann1 = Ann(arrs, labels, n_h=1)  # Create this architecture
+        
+        # Custom Thetas weights#
+        M1 = np.matrix([[1, -1, 0.5, -0.3, 2],
+                       [1, -1, 0.5, -0.3, 2],
+                       [1, -1, 0.5, -0.3, 2],
+                       [1, -1, 0.5, -0.3, 2]])
+        M2 = np.matrix([[1, 1, -1, 0.5, -1]])
+        ann1.Thetas[0] = M1
+        ann1.Thetas[1] = M2
+        cost_0 = ann1.cost()  # lam equals 0
+        cost_1 = ann1.cost(lam=1)  # lam equals 1
+        self.assertTrue(cost_1 > cost_0)  # Cost with regularization penalty is always higher than without regularization        
+
+        # Gradient checking (now with regularization)#
+        # Medium size data-set with several train_examples
+        lam_test = 1  # Regularization parameter
+        arrs = []
+        labels = []
+        classes = ('cat', 'dog')
+        for m in range(0, 100):
+            arr = [random.random() for x in range(0, 40)]
+            label = classes[random.random() > 0.5]
+            arrs.append(arr)
+            labels.append(label)
+        ann = Ann(arrs, labels, n_h=2)  # Create Ann with these train_examples and labels
+        # L-1 matrices of partial derivatives for first example
+        J = ann.backward_all(lam=lam_test)
+        T_original = copy.deepcopy(ann.Thetas)
+        
+        for l in range(0, ann.L - 1):
+            shape_J = J[l].shape
+            eps = 0.0001  # epsilon for a numerical approximation of the gradient
+            a = random.sample(range(0, shape_J[0]), 2)
+            b = random.sample(range(0, shape_J[1]), 2)
+            for i in a:
+                for j in b:
+                    T_e = np.zeros(shape_J)  # Matrix of zeros
+                    T_e[i][j] = eps
+                    ann.Thetas[l] = T_original[l] + T_e
+                    cost_e = ann.cost(lam=lam_test)  # Cost at Theta + eps
+                    ann.Thetas[l] = T_original[l] - T_e
+                    cost_minus_e = ann.cost(lam=lam_test)  # Cost at Theta - eps
+                    P = (cost_e - cost_minus_e) / (2 * eps)  # Numerical approximation
+                    J_ij = J[l].item(i, j)  # Backpropagation derivation
+                    
+                    # print(P, '\t', J_ij, '\t', abs(P - J_ij), (l, i, j))
+                    
+                    # if (P < 0 and J_ij > 0 or P > 0 and J_ij < 0):
+                    #    self.fail()
+                    
+                    self.assertAlmostEqual(P, J_ij, delta=0.001)
+                    ann.Thetas = copy.deepcopy(T_original)
     
 if __name__ == "__main__":
     unittest.main()
