@@ -2,6 +2,7 @@ import numpy as np
 import numpy.matlib as mp
 import math
 import random
+import datetime
 
 class Example(object):
     '''(Numeric) array and label class (for convenience)'''    
@@ -11,28 +12,41 @@ class Example(object):
         self.label = label
         
 class Model(object):
-    '''Stores the weights of the neural network'''    
-    def __init__(self, Thetas):
+    '''Stores the weights and named classes of the neural network'''    
+    def __init__(self, Thetas, classes):
         self.Thetas = Thetas
+        self.classes = classes
+        
+        shape_1 = self.Thetas[0].shape
+        n_i = shape_1[1] - 1
+        L = len(self.Thetas) + 1
+        n_h = L - 2
+        shape_L = self.Thetas[len(self.Thetas) - 1].shape
+        n_o = shape_L[1]
+        
+        self.name = 'model_n_i_' + str(n_i) + '_n_o_' + str(n_o) + '_n_h_' + str(n_h) + ' ' + str(datetime.datetime.today()) + '.annm'
 
 class Ann(object):
     '''Feed-forward neural network with arbitrary architecture'''    
     def __init__(self, *args, **kwargs):
         self.min = 2 * 10 ** (-308)  # Use this as minimum value (without underflow) bigger than 0
         s = []  # Architecture vector is initially undefined
-        '''Constructor checks if model is passed (assumes if only one argument is passed, then it is the model)'''
+        '''Constructor checks if a model is passed (assumes if only one argument is passed, then it is the model)'''
         if (len(args) == 1):
             model = args[0]
             '''Make sense of the model'''
             shape_1 = model.Thetas[0].shape
             self.n_i = shape_1[1] - 1
             self.L = len(model.Thetas) + 1
+            self.n_h = self.L - 2
             s = []
             for l in range(0, self.L - 2):  # For each hidden layer
                 num = model.Thetas[l].shape[1]
                 s.append(num + 1)
-            shape_L = model.Thetas[len(model.Thetas) - 1]
+            shape_L = model.Thetas[len(model.Thetas) - 1].shape
             self.n_o = shape_L[1]  # Note: there is no bias for the output layer
+            
+            self.classes = model.classes
         else:           
             '''Constructor checks if architecture is defined in kwargs, else list of train_examples and labels is used to define architecture'''
             self.train_examples = []
@@ -107,9 +121,9 @@ class Ann(object):
                 if (l == self.L - 1):
                     self.s[l] = int(self.n_o + 1)  # Adding bias to output layer (for convenience) 
         else:
-            self.s.append(int(self.n_i + 1))  # Inputs plus 1 bias)
+            self.s.append(int(self.n_i + 1))  # Inputs plus 1 bias
             self.s.extend(s)  # Add the defined hidden layer architecture (1 neuron per layer will be treated as bias)
-            self.s.append(int(self.n_o + 1))
+            self.s.append(int(self.n_o + 1))  # Adding bias to output layer (for convenience)
         
         '''Initialize all neuron weights randomly between -1 and 1'''
         self.Thetas = []  # Will hold L-1 matrices
@@ -178,6 +192,7 @@ class Ann(object):
         '''Just prints all train examples (vectors) and their classification by the neural network and their expected classification'''
         for ex in self.train_examples:
             print(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
+        return self.train_accuracy()
     
     def h_by_class(self, x):
         '''This function can be used when Ann is initialized with a model only (no examples)'''
@@ -224,6 +239,16 @@ class Ann(object):
         return D
     
     def train(self, **kwargs):
+        # Default optimization hyperparameters
+        it = 3000  # Maximum number of iterations
+        tol = 0.0001  # Stopping tolerance (with respect to decreasing cost function)
+        step = 2  # Gradient descent step size
+        if ('it' in kwargs.keys()):
+            it = kwargs['it']
+        if ('tol' in kwargs.keys()):
+            tol = kwargs['tol']
+        if ('step' in kwargs.keys()):
+            step = kwargs['step']        
         if ('lam' in kwargs.keys() or len(self.test_examples) == 0):
             if (len(kwargs.keys()) == 0):
                 lam = 0
@@ -232,10 +257,11 @@ class Ann(object):
             # If there are no test examples, just set lam = 0 and do not regularize
             print('\n')
             print('Starting train accuracy ' + str(self.train_accuracy()))
-            model = self.train_with_lam(lam)
+            model = self.train_with_lam(lam, it=it, tol=tol, step=step)
             print('Ending train accuracy ' + str(self.train_accuracy()))
             print('\n')
-            return model
+            
+            return ([model], [self.train_accuracy()], [self.cost(lam=lam)])
         else:
             ''' Do a search for the best regularization parameter lam in the interval (lam_min, lam_max)'''
             lam_min = 0
@@ -244,6 +270,7 @@ class Ann(object):
             
             test_accuracies = []
             test_costs = []
+            models = []
             
             steps = list(np.linspace(lam_min, lam_max, lam_num))
             for lam in steps:
@@ -251,7 +278,8 @@ class Ann(object):
                 print('Setting lambda=' + str(lam))
                 print('Starting test accuracy=' + str(self.test_accuracy()))
                 print('Starting train accuracy ' + str(self.train_accuracy()))
-                self.train_with_lam(lam)
+                model = self.train_with_lam(lam)
+                models.append(model)
                 t = self.test_accuracy()
                 print('Ending test accuracy=' + str(t))
                 print('Ending train accuracy ' + str(self.train_accuracy()))
@@ -259,17 +287,26 @@ class Ann(object):
                 test_costs.append(self.cost(lam=lam))
                 print('\n')
                 
-    def train_with_lam(self, lam):
+            return (models, test_accuracies, test_costs)
+                
+    def train_with_lam(self, lam, **kwargs):
         '''Convex optimization (full-batch gradient descent)'''
-        it = 3000  # Maximum number of iterations
-        tol = 0.00001  # If iteration gave less than tol decrease in cost, then stop
-        step = 3  # Gradient descent step size
+        it = kwargs['it']
+        tol = kwargs['tol']
+        step = kwargs['step']    
         print('\tMaximum number of iterations: ' + str(it))
         print('\tTolerance: ' + str(tol))
         print('\tGradient descent step size: ' + str(step))
         
+        last_100_costs = []
+        count = 0
+        cost_before = self.cost(lam=lam)
         for i in range(0, it):
-            cost_before = self.cost(lam=lam)
+            if (count < 100):
+                count += 1
+            else:
+                last_100_costs = last_100_costs[1:]
+            last_100_costs.append(cost_before)
             if (i % 100 == 0):
                 print('\tIteration ' + str(i) + '. Cost: ' + str(cost_before))
             
@@ -278,13 +315,16 @@ class Ann(object):
                 self.Thetas[l] = self.Thetas[l] - step * D[l]  # Take a step down the gradient (of the cost function)
             
             cost_after = self.cost(lam=lam)
-            
-            if (abs(cost_before - cost_after) < tol):
-                break
+            cost_before = cost_after
+            # After the first 100 iterations, check for stopping tolerance condition
+            if (count == 100):
+                # If the average cost over the last 10 iterations is within tol, then stop
+                if (abs(sum(last_100_costs) / len(last_100_costs) - cost_after) < tol):
+                    break                    
                     
         print('\tFinal cost: ' + str(cost_after) + ' (after ' + str(i + 1) + ' iterations)')
         
-        model = Model(self.Thetas)
+        model = Model(self.Thetas, self.classes)
         return model
                    
     def forward(self, x):

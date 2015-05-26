@@ -3,24 +3,129 @@ from Ann import Ann
 import numpy as np
 import random
 import copy
+import os
+import pickle
 
 class Test(unittest.TestCase):
     
     def test_all(self):
         ''' The A(lex) Neural Network tests (each sample_test is independent of others and order independent)'''
+        # Architecture test (testing if space allocated for Thetas and other variables are of appropriate shape)
         # self.sample_test_1()
+        
+        # Testing if forward propagation works (against precalculated example vectors)
         # self.sample_test_2()
+        
+        # Testing the dimensions of the matrices of partial derivatives (the Jacobian matrices)
         # self.sample_test_3()
+        
+        # Gradient checking on a small and medium size fake data-sets
         # self.sample_test_4()
+        
+        # Gradient checking on a larger fake data-set
         # self.sample_test_5()  # Takes over a minute to run
-        # self.sample_test_6()  # Takes over 10 minutes to run
-        self.sample_test_7()
+        
+        # See if gradient descent approaches a (local) minimum (even on random labeled data)
+        # self.sample_test_6()  # Takes over an hour to run
+        
+        # Learn boundaries between both linearly separable and non-linearly separable examples (putting it all together test)
+        # self.sample_test_7()
+        
+        # Gradient checking with regularization constant not equal to 0
         # self.sample_test_8()
         
+        # Check training and saving the model and evaluating vectors using the model (also uses pickle)
+        self.sample_test_9()
+        
         ''' Good fake data-set tests '''
-        # self.sample_test_9()  # Takes about 10 hours to run
+        # Data-set with two nested classes and some noise (testing if non-zero regularization constant increases test accuracy)
+        # self.sample_test_10()  # Takes about 10 hours to run
         
     def sample_test_9(self):
+        # function 1 (XOR function) on 1 hidden layers
+        arrs = []
+        arrs.append([0, 0])
+        arrs.append([0, 1])
+        arrs.append([1, 0])
+        arrs.append([1, 1])
+        labels = []
+        labels.append('false')
+        labels.append('true')
+        labels.append('true')
+        labels.append('false') 
+        ann = Ann(arrs, labels, n_h=1)
+        # Train and save model
+        model = ann.train()[0][0]  # Take the first model from the list of models in the tuple
+        ann.validate()
+        # Check to see if train_accuracy is over 90%
+        self.assertTrue(ann.train_accuracy() > 0.9)
+        
+        # Load the trained model into a new neural network
+        ann_from_model = Ann(model)
+        # Evaluate some vectors using this neural network initialized only with a model
+        self.assertEqual(ann_from_model.h_by_class(arrs[0]), 'false')
+        self.assertEqual(ann_from_model.h_by_class(arrs[1]), 'true')
+        x = [1.1, 0.9]
+        self.assertEqual(ann_from_model.h_by_class(x), 'false')
+        
+        # function 2 on 2 hidden layers
+        arrs2 = []
+        arrs2.append([1, 1])
+        arrs2.append([2, 2])
+        arrs2.append([1, 3])
+        arrs2.append([2, 10])
+        arrs2.append([1, -1])
+        arrs2.append([-2, -2])
+        arrs2.append([1, -3])
+        arrs2.append([-2, -10])
+        labels2 = []
+        labels2.append('false')
+        labels2.append('false')
+        labels2.append('false')
+        labels2.append('false')
+        labels2.append('true')
+        labels2.append('true')
+        labels2.append('true')
+        labels2.append('true') 
+        ann = Ann(arrs2, labels2, n_h=2)
+        model2 = ann.train()[0][0]
+        ann.validate()
+        
+        # Load the second model
+        ann_from_model = Ann(model2)
+        # Evaluate some vectors using this neural network initialized only with a model
+        self.assertEqual(ann_from_model.h_by_class(arrs2[0]), 'false')
+        self.assertEqual(ann_from_model.h_by_class(arrs2[len(arrs2) - 1]), 'true')
+        x = [1, -5]
+        self.assertEqual(ann_from_model.h_by_class(x), 'true')
+        
+        # Load the first model again
+        ann_from_model = Ann(model)
+        # Evaluate some vectors using this neural network initialized only with a model
+        self.assertEqual(ann_from_model.h_by_class(arrs[0]), 'false')
+        self.assertEqual(ann_from_model.h_by_class(arrs[1]), 'true')
+        x = [1.1, 0.9]
+        self.assertEqual(ann_from_model.h_by_class(x), 'false')
+        
+        # Try pickling our model into a sister folder
+        model_name = model.name
+        directory = '../Ann-models'
+        path_to_file = directory + '/' + model_name
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        pickle.dump(model, open(path_to_file, 'wb'))
+        
+        # Try unpickling our model
+        unpickled_model = pickle.load(open(path_to_file, 'rb'))
+        # Load unpickled model and test
+        ann_from_pickle = Ann(unpickled_model)
+        # Evaluate some vectors using this neural network initialized only with a model
+        self.assertEqual(ann_from_pickle.h_by_class(arrs[0]), 'false')
+        self.assertEqual(ann_from_pickle.h_by_class(arrs[1]), 'true')
+        x = [1.1, 0.9]
+        self.assertEqual(ann_from_pickle.h_by_class(x), 'false')
+    
+    def sample_test_10(self):
         '''Creates a fake data-set with points labeled 'yes' around origin and points labeled 'no' outside'''
         arrs = []
         labels = []
@@ -424,7 +529,6 @@ class Test(unittest.TestCase):
         
     def sample_test_7(self):
         # Learn some basic functions#
-        
         # Linearly-separable data-sets#
         
         # function 1 (AND function) on 0 hidden layers
@@ -443,7 +547,6 @@ class Test(unittest.TestCase):
         ann.validate()
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
-        
         # function 2 on 2 hidden layers
         arrs = []
         arrs.append([1, 1])
@@ -468,6 +571,7 @@ class Test(unittest.TestCase):
         ann.validate()
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
+        
         
         # Non-linearly-separable data-sets#
         
@@ -499,7 +603,7 @@ class Test(unittest.TestCase):
         labels.append('true')
         labels.append('true')
         labels.append('false')
-        s = [10, 11, 10]  # Custom hidden layer architecture
+        s = [4, 5]  # Custom hidden layer architecture
         ann = Ann(arrs, labels, n_h=len(s), s=s)
         ann.train()
         ann.validate()
@@ -525,7 +629,7 @@ class Test(unittest.TestCase):
         labels.append('true')
         labels.append('true')
         labels.append('true') 
-        ann = Ann(arrs, labels, n_h=2)
+        ann = Ann(arrs, labels, n_h=0)
         ann.train()
         ann.validate()
         # Check to see if train_accuracy is over 90%
