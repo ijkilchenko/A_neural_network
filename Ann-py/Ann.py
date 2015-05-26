@@ -215,26 +215,39 @@ class Ann(object):
         a = a / s
         return a
 
-    def backward_all(self, **kwargs):
+    def backward_batch(self, **kwargs):
+        # Let's choose lam (regularization constant) and a batch size (Note: 0.1 means the batch size is 10 %)
         if (len(kwargs.keys()) == 0):
             lam = 0
+            batch_size = 0.5
         else:
             lam = kwargs['lam']
+            if ('batch' in kwargs.keys()):
+                batch_size = kwargs['batch']
+            else:
+                batch_size = 0.5
+        
         D = []
         for l in range(0, self.L - 1):
             shape = self.Thetas[l].shape
             d = np.zeros(shape)
             D.append(d)
+        '''This is a heuristic to pick a batch size for our gradient descent algorithm'''
+        '''If number of train examples is larger than 50, then we approximate our partial derivatives by sampling only 10% of train examples'''
+        if (len(self.train_examples) > 50):
+            S = random.sample(range(0, len(self.train_examples)), math.floor(len(self.train_examples) * batch_size))
+        else:
+            S = range(0, len(self.train_examples))
         
-        for ex in self.train_examples:  # L-1 (Jacobian) matrices (matrices of partial derivatives of for each element in Thetas)
-            Js = self.backward(ex.arr, ex.y)
+        for i in S:  # L-1 (Jacobian) matrices (matrices of partial derivatives of for each element in Thetas)
+            Js = self.backward(self.train_examples[i].arr, self.train_examples[i].y)
             # Accumulate all partial derivatives in D
             for l in range(0, self.L - 1):
                 D[l] += Js[l]
         
         for l in range(0, self.L - 1):
             # Average the accumulated partial derivatives by number of train_examples
-            D[l] = D[l] / len(self.train_examples) + lam * self.Thetas[l] / len(self.train_examples)  # Regularization term
+            D[l] = D[l] / len(S) + lam * self.Thetas[l] / len(S)  # Regularization term
         
         return D
     
@@ -256,8 +269,13 @@ class Ann(object):
                 lam = kwargs['lam']
             # If there are no test examples, just set lam = 0 and do not regularize
             print('\n')
+            print('Using lambda=' + str(lam))
+            if (len(self.test_examples) > 0):
+                print('Starting test accuracy=' + str(self.test_accuracy()))
             print('Starting train accuracy ' + str(self.train_accuracy()))
             model = self.train_with_lam(lam, it=it, tol=tol, step=step)
+            if (len(self.test_examples) > 0):
+                print('Ending test accuracy=' + str(self.test_accuracy()))
             print('Ending train accuracy ' + str(self.train_accuracy()))
             print('\n')
             
@@ -266,7 +284,7 @@ class Ann(object):
             ''' Do a search for the best regularization parameter lam in the interval (lam_min, lam_max)'''
             lam_min = 0
             lam_max = 1
-            lam_num = 2
+            lam_num = 10
             
             test_accuracies = []
             test_costs = []
@@ -278,7 +296,7 @@ class Ann(object):
                 print('Setting lambda=' + str(lam))
                 print('Starting test accuracy=' + str(self.test_accuracy()))
                 print('Starting train accuracy ' + str(self.train_accuracy()))
-                model = self.train_with_lam(lam)
+                model = self.train_with_lam(lam, it=it, tol=tol, step=step)
                 models.append(model)
                 t = self.test_accuracy()
                 print('Ending test accuracy=' + str(t))
@@ -310,7 +328,7 @@ class Ann(object):
             if (i % 100 == 0):
                 print('\tIteration ' + str(i) + '. Cost: ' + str(cost_before))
             
-            D = self.backward_all(lam=lam)
+            D = self.backward_batch(lam=lam)
             for l in range(0, self.L - 1):
                 self.Thetas[l] = self.Thetas[l] - step * D[l]  # Take a step down the gradient (of the cost function)
             

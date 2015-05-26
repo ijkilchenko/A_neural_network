@@ -10,6 +10,9 @@ class Test(unittest.TestCase):
     
     def test_all(self):
         ''' The A(lex) Neural Network tests (each sample_test is independent of others and order independent)'''
+        
+        # Tests 1-5 (inclusive) take about a minute to run
+        
         # Architecture test (testing if space allocated for Thetas and other variables are of appropriate shape)
         # self.sample_test_1()
         
@@ -23,7 +26,7 @@ class Test(unittest.TestCase):
         # self.sample_test_4()
         
         # Gradient checking on a larger fake data-set
-        # self.sample_test_5()  # Takes over a minute to run
+        # self.sample_test_5()  # Takes a minute to run
         
         # See if gradient descent approaches a (local) minimum (even on random labeled data)
         # self.sample_test_6()  # Takes over an hour to run
@@ -35,11 +38,11 @@ class Test(unittest.TestCase):
         # self.sample_test_8()
         
         # Check training and saving the model and evaluating vectors using the model (also uses pickle)
-        self.sample_test_9()
+        # self.sample_test_9()
         
         ''' Good fake data-set tests '''
         # Data-set with two nested classes and some noise (testing if non-zero regularization constant increases test accuracy)
-        # self.sample_test_10()  # Takes about 10 hours to run
+        self.sample_test_10()  # Takes about 10 hours to run
         
     def sample_test_9(self):
         # function 1 (XOR function) on 1 hidden layers
@@ -131,30 +134,30 @@ class Test(unittest.TestCase):
         labels = []
         '''Points about the origin (located in a box of length 16 centered at origin)'''
         for i in range(0, 100):
-            arr = [random.randint(0, 8) * np.sign(random.random() - 0.5) for x in range(0, 10)]
+            arr = [random.randint(0, 8) * np.sign(random.random() - 0.5) for x in range(0, 2)]
             label = 'yes'
             arrs.append(arr)
             labels.append(label)
         '''Points outside the box'''
         for i in range(0, 100):
-            arr = [random.randint(10, 20) * np.sign(random.random() - 0.5) for x in range(0, 10)]
+            arr = [random.randint(10, 20) * np.sign(random.random() - 0.5) for x in range(0, 2)]
             label = 'no'
             arrs.append(arr)
             labels.append(label)
         '''Add some noise'''
         for i in range(0, 10):
-            arr = [random.randint(0, 8) * np.sign(random.random() - 0.5) for x in range(0, 10)]
+            arr = [random.randint(0, 8) * np.sign(random.random() - 0.5) for x in range(0, 2)]
             label = 'no'  # Note: this is artificially misclassified
             arrs.append(arr)
             labels.append(label)
         for i in range(0, 10):
-            arr = [random.randint(10, 20) * np.sign(random.random() - 0.5) for x in range(0, 10)]
+            arr = [random.randint(10, 20) * np.sign(random.random() - 0.5) for x in range(0, 2)]
             label = 'yes'  # Note: this is artificially misclassified
             arrs.append(arr)
             labels.append(label)
             
         ann = Ann(arrs, labels, n_h=2)
-        ann.train()
+        ann.train(lam=0)
 
     def sample_test_1(self):
         # Test for Ann Architecture#
@@ -402,7 +405,7 @@ class Test(unittest.TestCase):
             labels.append(label)
         ann = Ann(arrs, labels, n_h=2)  # Create Ann with these train_examples and labels
         # L-1 matrices of partial derivatives for first example
-        J = ann.backward_all()
+        J = ann.backward_batch()
         T_original = copy.deepcopy(ann.Thetas)
         
         for l in range(0, ann.L - 1):
@@ -455,7 +458,7 @@ class Test(unittest.TestCase):
             labels.append(label)
         ann = Ann(arrs, labels, n_h=2)  # Create Ann with these train_examples and labels
         # L-1 matrices of partial derivatives for first example
-        J = ann.backward_all()
+        J = ann.backward_batch()
         T_original = copy.deepcopy(ann.Thetas)
         
         # Just check the neuron connections between first, second, and third layer
@@ -487,14 +490,14 @@ class Test(unittest.TestCase):
     def sample_test_6(self):
         # Test if training works by checking that training lowers the cost for random small and medium size data-sets#
         
-        # Small size random data-set
+        # Small size random data-set with two labels
         arrs = []
         labels = []
         classes = ('cat', 'dog')
         for i in range(0, 2):
             print('\nTesting data-set ' + str(i))
             for m in range(0, 10):
-                arr = [random.random() for x in range(0, 5)]
+                arr = [random.random() for x in range(0, 3)]
                 label = classes[random.random() > 0.5]
                 arrs.append(arr)
                 labels.append(label)
@@ -504,14 +507,14 @@ class Test(unittest.TestCase):
             cost_after = ann.cost()
             self.assertTrue(cost_after <= cost_before)
             
-        # Medium size random data-set
+        # Medium size random data-set with three labels
         arrs = []
         labels = []
         classes = ('cat', 'dog', 'bird')
-        for i in range(0, 10):
+        for i in range(0, 2):
             print('\nTesting data-set ' + str(i))
-            for m in range(0, 100):
-                arr = [random.random() for x in range(0, 20)]
+            for m in range(0, 50):
+                arr = [random.random() for x in range(0, 10)]
                 z = random.random()
                 if (z < 0.33):
                     label = classes[0]
@@ -671,7 +674,7 @@ class Test(unittest.TestCase):
             labels.append(label)
         ann = Ann(arrs, labels, n_h=2)  # Create Ann with these train_examples and labels
         # L-1 matrices of partial derivatives for first example
-        J = ann.backward_all(lam=lam_test)
+        J = ann.backward_batch(lam=lam_test, batch=1)  # Use full-batch for gradient descent
         T_original = copy.deepcopy(ann.Thetas)
         
         for l in range(0, ann.L - 1):
