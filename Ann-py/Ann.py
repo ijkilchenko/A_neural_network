@@ -219,13 +219,13 @@ class Ann(object):
         # Let's choose lam (regularization constant) and a batch size (Note: 0.1 means the batch size is 10 %)
         if (len(kwargs.keys()) == 0):
             lam = 0
-            batch_size = 0.5
+            batch_size = 0.2
         else:
             lam = kwargs['lam']
             if ('batch' in kwargs.keys()):
                 batch_size = kwargs['batch']
             else:
-                batch_size = 0.5
+                batch_size = 0.2
         
         D = []
         for l in range(0, self.L - 1):
@@ -255,7 +255,7 @@ class Ann(object):
         # Default optimization hyperparameters
         it = 3000  # Maximum number of iterations
         tol = 0.0001  # Stopping tolerance (with respect to decreasing cost function)
-        step = 2  # Gradient descent step size
+        step = 3  # Gradient descent step size
         if ('it' in kwargs.keys()):
             it = kwargs['it']
         if ('tol' in kwargs.keys()):
@@ -311,7 +311,9 @@ class Ann(object):
         '''Convex optimization (full-batch gradient descent)'''
         it = kwargs['it']
         tol = kwargs['tol']
-        step = kwargs['step']    
+        step = kwargs['step']
+        mum = 0.8
+        
         print('\tMaximum number of iterations: ' + str(it))
         print('\tTolerance: ' + str(tol))
         print('\tGradient descent step size: ' + str(step))
@@ -319,8 +321,9 @@ class Ann(object):
         last_100_costs = []
         count = 0
         cost_before = self.cost(lam=lam)
+        D_last = [0] * (self.L - 1)
         for i in range(0, it):
-            if (count < 100):
+            if (count < 50):
                 count += 1
             else:
                 last_100_costs = last_100_costs[1:]
@@ -330,12 +333,13 @@ class Ann(object):
             
             D = self.backward_batch(lam=lam)
             for l in range(0, self.L - 1):
-                self.Thetas[l] = self.Thetas[l] - step * D[l]  # Take a step down the gradient (of the cost function)
+                self.Thetas[l] = self.Thetas[l] - step * D[l] - mum * D_last[l]  # Take a step down the gradient (of the cost function) bias towards momentum
+            D_last = D
             
             cost_after = self.cost(lam=lam)
             cost_before = cost_after
             # After the first 100 iterations, check for stopping tolerance condition
-            if (count == 100):
+            if (count == 50):
                 # If the average cost over the last 10 iterations is within tol, then stop
                 if (abs(sum(last_100_costs) / len(last_100_costs) - cost_after) < tol):
                     break                    

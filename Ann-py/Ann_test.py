@@ -32,7 +32,7 @@ class Test(unittest.TestCase):
         # self.sample_test_6()  # Takes over an hour to run
         
         # Learn boundaries between both linearly separable and non-linearly separable examples (putting it all together test)
-        # self.sample_test_7()
+        self.sample_test_7()
         
         # Gradient checking with regularization constant not equal to 0
         # self.sample_test_8()
@@ -42,7 +42,7 @@ class Test(unittest.TestCase):
         
         ''' Good fake data-set tests '''
         # Data-set with two nested classes and some noise (testing if non-zero regularization constant increases test accuracy)
-        self.sample_test_10()  # Takes about 10 hours to run
+        # self.sample_test_10()  # Takes about 10 hours to run
         
     def sample_test_9(self):
         # function 1 (XOR function) on 1 hidden layers
@@ -156,8 +156,25 @@ class Test(unittest.TestCase):
             arrs.append(arr)
             labels.append(label)
             
-        ann = Ann(arrs, labels, n_h=2)
-        ann.train(lam=0)
+        ann = Ann(arrs, labels, n_h=1)
+        (models, test_accuracies, test_costs) = ann.train()
+        
+        best_test_accuracy = 0
+        best_i = -1
+        for i in range(0, len(test_accuracies)):
+            if (test_accuracies[i] > best_test_accuracy):
+                best_test_accuracy = test_accuracies[i]
+                best_i = i
+                
+        if (best_i > -1):
+            model_name = models[i].name
+            directory = '../Ann-models'
+            path_to_file = directory + '/' + model_name
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            pickle.dump(models[i], open(path_to_file, 'wb'))
+        else:
+            print('Error!')
 
     def sample_test_1(self):
         # Test for Ann Architecture#
