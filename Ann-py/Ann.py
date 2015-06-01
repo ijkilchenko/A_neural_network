@@ -68,9 +68,9 @@ class Ann(object):
                     for x in range(0, len(arrs)):
                         if (labels[x] not in self.classes):
                             self.classes.append(labels[x])
-                    '''If there are at least 10 examples, do a 90-10 random split into train and test'''
+                    '''If there are at least 10 examples, do a 80-20 random split into train and test'''
                     if (len(arrs) >= 10):
-                        l = random.sample(range(0, len(arrs)), math.floor(len(arrs) / 10))
+                        l = random.sample(range(0, len(arrs)), math.floor(len(arrs) / 3))
                     for x in range(0, len(arrs)):
                         y = [0] * len(self.classes)
                         y[self.classes.index(labels[x])] = 1
@@ -219,13 +219,13 @@ class Ann(object):
         # Let's choose lam (regularization constant) and a batch size (Note: 0.1 means the batch size is 10 %)
         if (len(kwargs.keys()) == 0):
             lam = 0
-            batch_size = 0.2
+            batch_size = 1
         else:
             lam = kwargs['lam']
             if ('batch' in kwargs.keys()):
                 batch_size = kwargs['batch']
             else:
-                batch_size = 0.2
+                batch_size = 1
         
         D = []
         for l in range(0, self.L - 1):
@@ -253,9 +253,9 @@ class Ann(object):
     
     def train(self, **kwargs):
         # Default optimization hyperparameters
-        it = 3000  # Maximum number of iterations
-        tol = 0.0001  # Stopping tolerance (with respect to decreasing cost function)
-        step = 3  # Gradient descent step size
+        it = 1000  # Maximum number of iterations
+        tol = 0.00001  # Stopping tolerance (with respect to decreasing cost function)
+        step = 0.1  # Gradient descent step size
         if ('it' in kwargs.keys()):
             it = kwargs['it']
         if ('tol' in kwargs.keys()):
@@ -323,13 +323,15 @@ class Ann(object):
         cost_before = self.cost(lam=lam)
         D_last = [0] * (self.L - 1)
         for i in range(0, it):
-            if (count < 50):
+            if (count < 100):
                 count += 1
             else:
                 last_100_costs = last_100_costs[1:]
             last_100_costs.append(cost_before)
-            if (i % 100 == 0):
+            if (i % 5 == 0 and i % 20 != 0):
                 print('\tIteration ' + str(i) + '. Cost: ' + str(cost_before))
+            elif (i % 20 == 0):
+                print('\tIteration ' + str(i) + '. Cost: ' + str(cost_before) + '. Train-accuracy: ' + str(self.train_accuracy()))
             
             D = self.backward_batch(lam=lam)
             for l in range(0, self.L - 1):
@@ -339,7 +341,7 @@ class Ann(object):
             cost_after = self.cost(lam=lam)
             cost_before = cost_after
             # After the first 100 iterations, check for stopping tolerance condition
-            if (count == 50):
+            if (count == 100):
                 # If the average cost over the last 10 iterations is within tol, then stop
                 if (abs(sum(last_100_costs) / len(last_100_costs) - cost_after) < tol):
                     break                    
@@ -352,7 +354,7 @@ class Ann(object):
     def forward(self, x):
         '''Assumes x is like [1, 2, 3] (not numpy matrix)'''
         a = []  # Activation vectors for each of self.L layers
-        x = x + [1]  # Bias the input (non-destructively)
+        x = list(x) + [1]  # Bias the input (non-destructively)
         a.append(np.matrix([x]).T)  # Add biased input as column vector (s[0], 1) to a
         
         '''Calculate the remaining self.L-1 activation vectors'''

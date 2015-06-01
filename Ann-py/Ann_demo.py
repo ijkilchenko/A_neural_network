@@ -1,6 +1,6 @@
 from Ann import Ann
 
-def main():
+def demo_helper():
     print('\t** Learn the AND function using 0 hidden layers (logistic regression) **')
     arrs = []
     labels = []
@@ -63,5 +63,5 @@ def main():
         print('\t** ERROR (when learning the XOR function using 1 hidden layers **\n')
     
 if __name__ == '__main__':
-    main()
+    demo_helper()
     

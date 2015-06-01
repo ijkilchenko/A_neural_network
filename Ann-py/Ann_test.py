@@ -32,7 +32,7 @@ class Test(unittest.TestCase):
         # self.sample_test_6()  # Takes over an hour to run
         
         # Learn boundaries between both linearly separable and non-linearly separable examples (putting it all together test)
-        self.sample_test_7()
+        # self.sample_test_7()
         
         # Gradient checking with regularization constant not equal to 0
         # self.sample_test_8()
@@ -42,7 +42,7 @@ class Test(unittest.TestCase):
         
         ''' Good fake data-set tests '''
         # Data-set with two nested classes and some noise (testing if non-zero regularization constant increases test accuracy)
-        # self.sample_test_10()  # Takes about 10 hours to run
+        self.sample_test_10()  # Takes about an hour to run
         
     def sample_test_9(self):
         # function 1 (XOR function) on 1 hidden layers
@@ -156,7 +156,7 @@ class Test(unittest.TestCase):
             arrs.append(arr)
             labels.append(label)
             
-        ann = Ann(arrs, labels, n_h=1)
+        ann = Ann(arrs, labels, n_h=2)
         (models, test_accuracies, test_costs) = ann.train()
         
         best_test_accuracy = 0
@@ -441,7 +441,7 @@ class Test(unittest.TestCase):
                     P = (cost_e - cost_minus_e) / (2 * eps)  # Numerical approximation
                     J_ij = J[l].item(i, j)  # Backpropagation derivation
                     
-                    # print(P, '\t', J_ij, '\t', abs(P - J_ij), (l, i, j))
+                    print(P, '\t', J_ij, '\t', abs(P - J_ij), (l, i, j))
                     
                     # if (P < 0 and J_ij > 0 or P > 0 and J_ij < 0):
                     #    self.fail()
