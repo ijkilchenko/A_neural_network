@@ -7,6 +7,8 @@ Created on Jun 1, 2015
 import re
 from nltk.tokenize import sent_tokenize
 from nltk.corpus import stopwords
+import random
+import math
 
 class Book(object):
     
@@ -37,5 +39,12 @@ class Book(object):
             sentence = re.sub(r'[ ]+', r' ', sentence).strip()
             sentences.append(sentence)
             
-        return sentences
+        partial_sentences = []
+        # Keep only 20% of all sentences
+        num = int(math.floor(len(sentences) * 0.2))
+        l = random.sample(range(0, len(sentences)), num)
+        for i in l:
+            partial_sentences.append(sentences[i])
+            
+        return partial_sentences
     
