@@ -59,7 +59,7 @@ class Test(unittest.TestCase):
         ann = Ann(arrs, labels, n_h=1)
         # Train and save model
         model = ann.train()[0][0]  # Take the first model from the list of models in the tuple
-        ann.validate()
+        ann.validate_train()
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
         
@@ -92,7 +92,7 @@ class Test(unittest.TestCase):
         labels2.append('true') 
         ann = Ann(arrs2, labels2, n_h=2)
         model2 = ann.train()[0][0]
-        ann.validate()
+        ann.validate_train()
         
         # Load the second model
         ann_from_model = Ann(model2)
@@ -564,7 +564,7 @@ class Test(unittest.TestCase):
         labels.append('true') 
         ann = Ann(arrs, labels, n_h=0)
         ann.train()
-        ann.validate()
+        ann.validate_train()
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
         # function 2 on 2 hidden layers
@@ -588,7 +588,7 @@ class Test(unittest.TestCase):
         labels.append('true') 
         ann = Ann(arrs, labels, n_h=2)
         ann.train()
-        ann.validate()
+        ann.validate_train()
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
         
@@ -608,7 +608,7 @@ class Test(unittest.TestCase):
         labels.append('false') 
         ann = Ann(arrs, labels, n_h=1)
         ann.train()
-        ann.validate()
+        ann.validate_train()
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
         
@@ -626,7 +626,7 @@ class Test(unittest.TestCase):
         s = [4, 5]  # Custom hidden layer architecture
         ann = Ann(arrs, labels, n_h=len(s), s=s)
         ann.train()
-        ann.validate()
+        ann.validate_train()
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
         
@@ -651,7 +651,7 @@ class Test(unittest.TestCase):
         labels.append('true') 
         ann = Ann(arrs, labels, n_h=0)
         ann.train()
-        ann.validate()
+        ann.validate_train()
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
         

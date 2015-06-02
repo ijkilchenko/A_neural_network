@@ -188,11 +188,17 @@ class Ann(object):
                 num_correct += 1
         return num_correct / len(examples)
     
-    def validate(self):
+    def validate_train(self):
         '''Just prints all train examples (vectors) and their classification by the neural network and their expected classification'''
         for ex in self.train_examples:
             print(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
         return self.train_accuracy()
+    
+    def validate_test(self):
+        '''Does what validate_train does but on the test_examples'''
+        for ex in self.test_examples:
+            print(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
+        return self.test_accuracy()
     
     def h_by_class(self, x):
         '''This function can be used when Ann is initialized with a model only (no examples)'''
@@ -253,7 +259,7 @@ class Ann(object):
     
     def train(self, **kwargs):
         # Default optimization hyperparameters
-        it = 1000  # Maximum number of iterations
+        it = 200  # Maximum number of iterations
         tol = 0.00001  # Stopping tolerance (with respect to decreasing cost function)
         step = 0.1  # Gradient descent step size
         if ('it' in kwargs.keys()):
@@ -308,7 +314,7 @@ class Ann(object):
             return (models, test_accuracies, test_costs)
                 
     def train_with_lam(self, lam, **kwargs):
-        '''Convex optimization (full-batch gradient descent)'''
+        '''Convex optimization (mini-batch gradient descent)'''
         it = kwargs['it']
         tol = kwargs['tol']
         step = kwargs['step']
@@ -323,7 +329,7 @@ class Ann(object):
         cost_before = self.cost(lam=lam)
         D_last = [0] * (self.L - 1)
         for i in range(0, it):
-            if (count < 100):
+            if (count < 10):
                 count += 1
             else:
                 last_100_costs = last_100_costs[1:]
@@ -341,7 +347,7 @@ class Ann(object):
             cost_after = self.cost(lam=lam)
             cost_before = cost_after
             # After the first 100 iterations, check for stopping tolerance condition
-            if (count == 100):
+            if (count == 10):
                 # If the average cost over the last 10 iterations is within tol, then stop
                 if (abs(sum(last_100_costs) / len(last_100_costs) - cost_after) < tol):
                     break                    

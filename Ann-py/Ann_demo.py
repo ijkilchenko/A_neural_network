@@ -11,7 +11,7 @@ def demo_helper():
     num_hidden_layers = 0
     ann = Ann(arrs, labels, n_h=num_hidden_layers)
     ann.train()
-    if (ann.validate() == 1):
+    if (ann.validate_train() == 1):
         print('\t** The AND function was learned correctly using 0 hidden layers **\n')
     else:
         print('\t** ERROR (when learning the AND function using 0 hidden layers **\n')
@@ -26,7 +26,7 @@ def demo_helper():
     num_hidden_layers = 1
     ann = Ann(arrs, labels, n_h=num_hidden_layers)
     ann.train()
-    if (ann.validate() == 1):
+    if (ann.validate_train() == 1):
         print('\t** The AND function was learned correctly using 1 hidden layers **\n')
     else:
         print('\t** ERROR (when learning the AND function using 1 hidden layers **\n')
@@ -41,7 +41,7 @@ def demo_helper():
     num_hidden_layers = 0
     ann = Ann(arrs, labels, n_h=num_hidden_layers)
     ann.train()
-    if (ann.validate() != 1):
+    if (ann.validate_train() != 1):
         print('\t** The XOR function was not learned correctly (as expected) because logistic regression (0 hidden layers) \n' + 
               'cannot create a boundary through a non-linearly separable data-set (which the XOR function is)**\n')
     else:
@@ -57,7 +57,7 @@ def demo_helper():
     num_hidden_layers = 1
     ann = Ann(arrs, labels, n_h=num_hidden_layers)
     ann.train()
-    if (ann.validate() == 1):
+    if (ann.validate_train() == 1):
         print('\t** The XOR function was learned correctly using 1 hidden layers **\n')
     else:
         print('\t** ERROR (when learning the XOR function using 1 hidden layers **\n')
