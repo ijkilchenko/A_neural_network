@@ -47,4 +47,4 @@ class Book(object):
             partial_sentences.append(sentences[i])
             
         return partial_sentences
-    
+

@@ -7,44 +7,8 @@ import os
 import pickle
 
 class Test(unittest.TestCase):
-    
-    def test_all(self):
-        ''' The A(lex) Neural Network tests (each sample_test is independent of others and order independent)'''
-        
-        # Tests 1-5 (inclusive) take about a minute to run
-        
-        # Architecture test (testing if space allocated for Thetas and other variables are of appropriate shape)
-        # self.sample_test_1()
-        
-        # Testing if forward propagation works (against precalculated example vectors)
-        # self.sample_test_2()
-        
-        # Testing the dimensions of the matrices of partial derivatives (the Jacobian matrices)
-        # self.sample_test_3()
-        
-        # Gradient checking on a small and medium size fake data-sets
-        # self.sample_test_4()
-        
-        # Gradient checking on a larger fake data-set
-        # self.sample_test_5()  # Takes a minute to run
-        
-        # See if gradient descent approaches a (local) minimum (even on random labeled data)
-        # self.sample_test_6()  # Takes over an hour to run
-        
-        # Learn boundaries between both linearly separable and non-linearly separable examples (putting it all together test)
-        # self.sample_test_7()
-        
-        # Gradient checking with regularization constant not equal to 0
-        # self.sample_test_8()
-        
-        # Check training and saving the model and evaluating vectors using the model (also uses pickle)
-        # self.sample_test_9()
-        
-        ''' Good fake data-set tests '''
-        # Data-set with two nested classes and some noise (testing if non-zero regularization constant increases test accuracy)
-        self.sample_test_10()  # Takes about an hour to run
-        
-    def sample_test_9(self):
+
+    def test_9(self):
         # function 1 (XOR function) on 1 hidden layers
         arrs = []
         arrs.append([0, 0])
@@ -128,7 +92,7 @@ class Test(unittest.TestCase):
         x = [1.1, 0.9]
         self.assertEqual(ann_from_pickle.h_by_class(x), 'false')
     
-    def sample_test_10(self):
+    def test_10(self):
         '''Creates a fake data-set with points labeled 'yes' around origin and points labeled 'no' outside'''
         arrs = []
         labels = []
@@ -176,7 +140,7 @@ class Test(unittest.TestCase):
         else:
             print('Error!')
 
-    def sample_test_1(self):
+    def test_1(self):
         # Test for Ann Architecture#
         
         # First architecture test#
@@ -257,7 +221,7 @@ class Test(unittest.TestCase):
         self.assertEqual(ann1.Thetas[1].shape, (1, 3))
         self.assertEqual(ann1.Thetas[2].shape, (2, 2))
 
-    def sample_test_2(self):
+    def test_2(self):
         # Test for forward-propagation#
         
         # First architecture test#
@@ -339,7 +303,7 @@ class Test(unittest.TestCase):
         # a^(1) Should be [0.858 0.858 0.858 0.858 1]^T#
         self.assertAlmostEqual(ann1.h(x2), 0.571, delta=0.001)
         
-    def sample_test_3(self):
+    def test_3(self):
         
         # Test the dimensions of the Jacobian matrices against Theta matrices for first architecture#
         n_i1 = 4  # Number of input neurons
@@ -377,7 +341,7 @@ class Test(unittest.TestCase):
         for l in range(0, ann1.L - 1):
             self.assertEqual(ann1.Thetas[l].shape, J[l].shape)
             
-    def sample_test_4(self):
+    def test_4(self):
         # Gradient checking (check that a numerical approximation of the gradient is equal to our backpropagation derivation)#
         
         # First data-set with one example
@@ -449,7 +413,7 @@ class Test(unittest.TestCase):
                     self.assertAlmostEqual(P, J_ij, delta=0.001)
                     ann.Thetas = copy.deepcopy(T_original)
                     
-    def sample_test_5(self):
+    def test_5(self):
         # Comprehensive gradient checking #
         
         # Medium size data-set with more than two classes
@@ -504,7 +468,7 @@ class Test(unittest.TestCase):
                     self.assertAlmostEqual(P, J_ij, delta=0.001)
                     ann.Thetas = copy.deepcopy(T_original)
             
-    def sample_test_6(self):
+    def test_6(self):
         # Test if training works by checking that training lowers the cost for random small and medium size data-sets#
         
         # Small size random data-set with two labels
@@ -547,7 +511,7 @@ class Test(unittest.TestCase):
             cost_after = ann.cost()
             self.assertTrue(cost_after <= cost_before)
         
-    def sample_test_7(self):
+    def test_7(self):
         # Learn some basic functions#
         # Linearly-separable data-sets#
         
@@ -655,7 +619,7 @@ class Test(unittest.TestCase):
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
         
-    def sample_test_8(self):
+    def test_8(self):
         # First test#
         # 1 hidden layer cost test with regularization#       
         x1 = [1, 2, 3, 4]  # Array as first example

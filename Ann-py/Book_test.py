@@ -8,9 +8,7 @@ import unittest
 import re
 from Book import Book
 
-
 class Test(unittest.TestCase):
-
 
     def test_clean_and_segment(self):
         name = 'JackLondon_TheCalloftheWild.txt'

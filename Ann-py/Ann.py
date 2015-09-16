@@ -415,3 +415,4 @@ class Ann(object):
             Js.append(P)
         
         return Js  # Returns L-1 Jacobian matrices (matrices of partial derivatives)
+
