@@ -259,9 +259,9 @@ class Ann(object):
     
     def train(self, **kwargs):
         # Default optimization hyperparameters
-        it = 200  # Maximum number of iterations
+        it = 500  # Maximum number of iterations
         tol = 0.00001  # Stopping tolerance (with respect to decreasing cost function)
-        step = 0.001  # Gradient descent step size
+        step = 0.01  # Gradient descent step size
         if ('it' in kwargs.keys()):
             it = kwargs['it']
         if ('tol' in kwargs.keys()):
