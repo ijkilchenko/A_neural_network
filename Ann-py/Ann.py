@@ -225,13 +225,13 @@ class Ann(object):
         # Let's choose lam (regularization constant) and a batch size (Note: 0.1 means the batch size is 10 %)
         if (len(kwargs.keys()) == 0):
             lam = 0
-            batch_size = 1
+            batch_size = 0.5
         else:
             lam = kwargs['lam']
             if ('batch' in kwargs.keys()):
                 batch_size = kwargs['batch']
             else:
-                batch_size = 1
+                batch_size = 0.5
         
         D = []
         for l in range(0, self.L - 1):
@@ -239,7 +239,7 @@ class Ann(object):
             d = np.zeros(shape)
             D.append(d)
         '''This is a heuristic to pick a batch size for our gradient descent algorithm'''
-        '''If number of train examples is larger than 50, then we approximate our partial derivatives by sampling only 10% of train examples'''
+        '''If number of train examples is larger than 50, then we approximate our partial derivatives by sampling only batch_size (in percents) of train examples'''
         if (len(self.train_examples) > 50):
             S = random.sample(range(0, len(self.train_examples)), math.floor(len(self.train_examples) * batch_size))
         else:
@@ -261,7 +261,7 @@ class Ann(object):
         # Default optimization hyperparameters
         it = 200  # Maximum number of iterations
         tol = 0.00001  # Stopping tolerance (with respect to decreasing cost function)
-        step = 0.1  # Gradient descent step size
+        step = 0.001  # Gradient descent step size
         if ('it' in kwargs.keys()):
             it = kwargs['it']
         if ('tol' in kwargs.keys()):
@@ -318,7 +318,7 @@ class Ann(object):
         it = kwargs['it']
         tol = kwargs['tol']
         step = kwargs['step']
-        mum = 0.8
+        mum = 0.1
         
         print('\tMaximum number of iterations: ' + str(it))
         print('\tTolerance: ' + str(tol))
