@@ -31,7 +31,7 @@ python3 Ann_demo.py
 
 to understand why someone would want to make a neural network with more than 0 hidden layers. Hint: if this feedforward neural network is initialized with 0 hidden layers, then you have logistic regression. Logistic regression can't separate non-linearly separable data sets. 
 
-Let's make a small data set to learn the AND function. 
+Let's make a small data set to learn the OR function. 
 
 ```python
 arrs = [] # List to hold the observations
