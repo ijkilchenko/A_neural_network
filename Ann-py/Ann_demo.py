@@ -1,6 +1,17 @@
 from Ann import Ann
+import logging
+
+logger = logging.getLogger(__name__)
+
+def init_logger(self, level='info'):
+    if (level == 'debug'):
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
 def demo_helper():
+    init_logger('debug')
+    
     print('\t** Learn the AND function using 0 hidden layers (logistic regression) **')
     arrs = []
     labels = []
@@ -48,7 +59,6 @@ def demo_helper():
     else:
         print('\t** ERROR (when learning the XOR function using 0 hidden layers **\n')
     
-    '''
     print('\t** Learn the XOR function using 1 hidden layer **')
     arrs = []
     labels = []
@@ -63,7 +73,6 @@ def demo_helper():
         print('\t** The XOR function was learned correctly using 1 hidden layers **\n')
     else:
         print('\t** ERROR (when learning the XOR function using 1 hidden layers **\n')
-    '''
     
 if __name__ == '__main__':
     demo_helper()

@@ -205,13 +205,13 @@ class Ann(object):
     def validate_train(self):
         '''Just logger.infos all train examples (vectors) and their classification by the neural network and their expected classification'''
         for ex in self.train_examples:
-            logger.info(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
+            print(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
         return self.train_accuracy()
     
     def validate_test(self):
         '''Does what validate_train does but on the test_examples'''
         for ex in self.test_examples:
-            logger.info(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
+            print(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
         return self.test_accuracy()
     
     def h_by_class(self, x):

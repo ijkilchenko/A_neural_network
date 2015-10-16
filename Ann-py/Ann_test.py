@@ -449,7 +449,7 @@ class Test(unittest.TestCase):
         labels.append('true')
         labels.append('false') 
         ann = Ann(arrs, labels, n_h=1)
-        ann.train(it=5000)
+        ann.train(it=3000)
         ann.validate_train()
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
@@ -535,7 +535,7 @@ class Test(unittest.TestCase):
             labels.append(label)
         ann = Ann(arrs, labels, n_h=2)  # Create Ann with these train_examples and labels
         # L-1 matrices of partial derivatives for first example
-        J = ann.backward_batch(lam=lam_test, batch=1)  # Use full-batch for gradient descent
+        J = ann.backward_batch(lam=lam_test, batch_size=1)  # Use full-batch for gradient descent
         T_original = copy.deepcopy(ann.Thetas)
          
         for l in range(0, ann.L - 1):
@@ -653,19 +653,19 @@ class Test(unittest.TestCase):
         arrs = []
         labels = []
         '''Points about the origin (located in a box of length 16 centered at origin)'''
-        for i in range(0, 100):
+        for i in range(0, 10):
             arr = [random.randint(0, 8) * np.sign(random.random() - 0.5) for x in range(0, 2)]
             label = 'yes'
             arrs.append(arr)
             labels.append(label)
         '''Points outside the box'''
-        for i in range(0, 100):
+        for i in range(0, 10):
             arr = [random.randint(10, 20) * np.sign(random.random() - 0.5) for x in range(0, 2)]
             label = 'no'
             arrs.append(arr)
             labels.append(label)
         '''Add some noise'''
-        for i in range(0, 10):
+        for i in range(0, 2):
             arr = [random.randint(0, 8) * np.sign(random.random() - 0.5) for x in range(0, 2)]
             label = 'no'  # Note: this is artificially misclassified
             arrs.append(arr)
@@ -694,7 +694,7 @@ class Test(unittest.TestCase):
                 os.makedirs(directory)
             pickle.dump(models[i], open(path_to_file, 'wb'))
         else:
-            print('Error!')
+            logger.error('Error!')
     
 if __name__ == "__main__":
     Ann.init_logger('debug')
