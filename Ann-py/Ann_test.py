@@ -448,8 +448,8 @@ class Test(unittest.TestCase):
         labels.append('true')
         labels.append('true')
         labels.append('false') 
-        ann = Ann(arrs, labels, n_h=5)
-        ann.train(it=1000)
+        ann = Ann(arrs, labels, n_h=1)
+        ann.train(it=5000)
         ann.validate_train()
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
@@ -498,202 +498,203 @@ class Test(unittest.TestCase):
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
          
-#     def test_8(self):
-#         # First test#
-#         # 1 hidden layer cost test with regularization#       
-#         x1 = [1, 2, 3, 4]  # Array as first example
-#         y1 = 'yes'
-#         arrs = []
-#         labels = []
-#         arrs.append(x1)
-#         labels.append(y1)
-#         ann1 = Ann(arrs, labels, n_h=1)  # Create this architecture
-#         
-#         # Custom Thetas weights#
-#         M1 = np.matrix([[1, -1, 0.5, -0.3, 2],
-#                        [1, -1, 0.5, -0.3, 2],
-#                        [1, -1, 0.5, -0.3, 2],
-#                        [1, -1, 0.5, -0.3, 2]])
-#         M2 = np.matrix([[1, 1, -1, 0.5, -1]])
-#         ann1.Thetas[0] = M1
-#         ann1.Thetas[1] = M2
-#         cost_0 = ann1.cost()  # lam equals 0
-#         cost_1 = ann1.cost(lam=1)  # lam equals 1
-#         self.assertTrue(cost_1 > cost_0)  # Cost with regularization penalty is always higher than without regularization        
-# 
-#         # Gradient checking (now with regularization)#
-#         # Medium size data-set with several train_examples
-#         lam_test = 1  # Regularization parameter
-#         arrs = []
-#         labels = []
-#         classes = ('cat', 'dog')
-#         for m in range(0, 100):
-#             arr = [random.random() for x in range(0, 40)]
-#             label = classes[random.random() > 0.5]
-#             arrs.append(arr)
-#             labels.append(label)
-#         ann = Ann(arrs, labels, n_h=2)  # Create Ann with these train_examples and labels
-#         # L-1 matrices of partial derivatives for first example
-#         J = ann.backward_batch(lam=lam_test, batch=1)  # Use full-batch for gradient descent
-#         T_original = copy.deepcopy(ann.Thetas)
-#         
-#         for l in range(0, ann.L - 1):
-#             shape_J = J[l].shape
-#             eps = 0.0001  # epsilon for a numerical approximation of the gradient
-#             a = random.sample(range(0, shape_J[0]), 2)
-#             b = random.sample(range(0, shape_J[1]), 2)
-#             for i in a:
-#                 for j in b:
-#                     T_e = np.zeros(shape_J)  # Matrix of zeros
-#                     T_e[i][j] = eps
-#                     ann.Thetas[l] = T_original[l] + T_e
-#                     cost_e = ann.cost(lam=lam_test)  # Cost at Theta + eps
-#                     ann.Thetas[l] = T_original[l] - T_e
-#                     cost_minus_e = ann.cost(lam=lam_test)  # Cost at Theta - eps
-#                     P = (cost_e - cost_minus_e) / (2 * eps)  # Numerical approximation
-#                     J_ij = J[l].item(i, j)  # Backpropagation derivation
-#                     
-#                     # print(P, '\t', J_ij, '\t', abs(P - J_ij), (l, i, j))
-#                     
-#                     # if (P < 0 and J_ij > 0 or P > 0 and J_ij < 0):
-#                     #    self.fail()
-#                     
-#                     self.assertAlmostEqual(P, J_ij, delta=0.001)
-#                     ann.Thetas = copy.deepcopy(T_original)
-# 
-#     def test_9(self):
-#         '''
-#         # function 1 (XOR function) on 1 hidden layers
-#         arrs = []
-#         arrs.append([0, 0])
-#         arrs.append([0, 1])
-#         arrs.append([1, 0])
-#         arrs.append([1, 1])
-#         labels = []
-#         labels.append('false')
-#         labels.append('true')
-#         labels.append('true')
-#         labels.append('false') 
-#         ann = Ann(arrs, labels, n_h=1)
-#         # Train and save model
-#         model = ann.train()[0][0]  # Take the first model from the list of models in the tuple
-#         ann.validate_train()
-#         # Check to see if train_accuracy is over 90%
-#         self.assertTrue(ann.train_accuracy() > 0.9)
-#         
-#         # Load the trained model into a new neural network
-#         ann_from_model = Ann(model)
-#         # Evaluate some vectors using this neural network initialized only with a model
-#         self.assertEqual(ann_from_model.h_by_class(arrs[0]), 'false')
-#         self.assertEqual(ann_from_model.h_by_class(arrs[1]), 'true')
-#         x = [1.1, 0.9]
-#         self.assertEqual(ann_from_model.h_by_class(x), 'false')
-#         '''
-# 
-#         # function 2 on 2 hidden layers
-#         arrs2 = []
-#         arrs2.append([1, 1])
-#         arrs2.append([2, 2])
-#         arrs2.append([1, 3])
-#         arrs2.append([2, 10])
-#         arrs2.append([1, -1])
-#         arrs2.append([-2, -2])
-#         arrs2.append([1, -3])
-#         arrs2.append([-2, -10])
-#         labels2 = []
-#         labels2.append('false')
-#         labels2.append('false')
-#         labels2.append('false')
-#         labels2.append('false')
-#         labels2.append('true')
-#         labels2.append('true')
-#         labels2.append('true')
-#         labels2.append('true') 
-#         ann = Ann(arrs2, labels2, n_h=2)
-#         model2 = ann.train()[0][0]
-#         ann.validate_train()
-#         
-#         # Load the second model
-#         ann_from_model = Ann(model2)
-#         # Evaluate some vectors using this neural network initialized only with a model
-#         self.assertEqual(ann_from_model.h_by_class(arrs2[0]), 'false')
-#         self.assertEqual(ann_from_model.h_by_class(arrs2[len(arrs2) - 1]), 'true')
-#         x = [1, -5]
-#         self.assertEqual(ann_from_model.h_by_class(x), 'true')
-#         
-#         # Load the first model again
-#         ann_from_model = Ann(model)
-#         # Evaluate some vectors using this neural network initialized only with a model
-#         self.assertEqual(ann_from_model.h_by_class(arrs[0]), 'false')
-#         self.assertEqual(ann_from_model.h_by_class(arrs[1]), 'true')
-#         x = [1.1, 0.9]
-#         self.assertEqual(ann_from_model.h_by_class(x), 'false')
-#         
-#         # Try pickling our model into a sister folder
-#         model_name = model.name
-#         directory = '../Ann-models'
-#         path_to_file = directory + '/' + model_name
-#         if not os.path.exists(directory):
-#             os.makedirs(directory)
-#         pickle.dump(model, open(path_to_file, 'wb'))
-#         
-#         # Try unpickling our model
-#         unpickled_model = pickle.load(open(path_to_file, 'rb'))
-#         # Load unpickled model and test
-#         ann_from_pickle = Ann(unpickled_model)
-#         # Evaluate some vectors using this neural network initialized only with a model
-#         self.assertEqual(ann_from_pickle.h_by_class(arrs[0]), 'false')
-#         self.assertEqual(ann_from_pickle.h_by_class(arrs[1]), 'true')
-#         x = [1.1, 0.9]
-#         self.assertEqual(ann_from_pickle.h_by_class(x), 'false')
-#     
-#     def test_10(self):
-#         '''Creates a fake data-set with points labeled 'yes' around origin and points labeled 'no' outside'''
-#         arrs = []
-#         labels = []
-#         '''Points about the origin (located in a box of length 16 centered at origin)'''
-#         for i in range(0, 100):
-#             arr = [random.randint(0, 8) * np.sign(random.random() - 0.5) for x in range(0, 2)]
-#             label = 'yes'
-#             arrs.append(arr)
-#             labels.append(label)
-#         '''Points outside the box'''
-#         for i in range(0, 100):
-#             arr = [random.randint(10, 20) * np.sign(random.random() - 0.5) for x in range(0, 2)]
-#             label = 'no'
-#             arrs.append(arr)
-#             labels.append(label)
-#         '''Add some noise'''
-#         for i in range(0, 10):
-#             arr = [random.randint(0, 8) * np.sign(random.random() - 0.5) for x in range(0, 2)]
-#             label = 'no'  # Note: this is artificially misclassified
-#             arrs.append(arr)
-#             labels.append(label)
-#         for i in range(0, 10):
-#             arr = [random.randint(10, 20) * np.sign(random.random() - 0.5) for x in range(0, 2)]
-#             label = 'yes'  # Note: this is artificially misclassified
-#             arrs.append(arr)
-#             labels.append(label)
-#             
-#         ann = Ann(arrs, labels, n_h=2)
-#         (models, test_accuracies, test_costs) = ann.train()
-#         
-#         best_test_accuracy = 0
-#         best_i = -1
-#         for i in range(0, len(test_accuracies)):
-#             if (test_accuracies[i] > best_test_accuracy):
-#                 best_test_accuracy = test_accuracies[i]
-#                 best_i = i
-#                 
-#         if (best_i > -1):
-#             model_name = models[i].name
-#             directory = '../Ann-models'
-#             path_to_file = directory + '/' + model_name
-#             if not os.path.exists(directory):
-#                 os.makedirs(directory)
-#             pickle.dump(models[i], open(path_to_file, 'wb'))
-#         else:
-#             print('Error!')
+    @timeit
+    def test_8(self):
+        # First test#
+        # 1 hidden layer cost test with regularization#       
+        x1 = [1, 2, 3, 4]  # Array as first example
+        y1 = 'yes'
+        arrs = []
+        labels = []
+        arrs.append(x1)
+        labels.append(y1)
+        ann1 = Ann(arrs, labels, n_h=1)  # Create this architecture
+         
+        # Custom Thetas weights#
+        M1 = np.matrix([[1, -1, 0.5, -0.3, 2],
+                       [1, -1, 0.5, -0.3, 2],
+                       [1, -1, 0.5, -0.3, 2],
+                       [1, -1, 0.5, -0.3, 2]])
+        M2 = np.matrix([[1, 1, -1, 0.5, -1]])
+        ann1.Thetas[0] = M1
+        ann1.Thetas[1] = M2
+        cost_0 = ann1.cost()  # lam equals 0
+        cost_1 = ann1.cost(lam=1)  # lam equals 1
+        self.assertTrue(cost_1 > cost_0)  # Cost with regularization penalty is always higher than without regularization        
+ 
+        # Gradient checking (now with regularization)#
+        # Medium size data-set with several train_examples
+        lam_test = 1  # Regularization parameter
+        arrs = []
+        labels = []
+        classes = ('cat', 'dog')
+        for m in range(0, 100):
+            arr = [random.random() for x in range(0, 40)]
+            label = classes[random.random() > 0.5]
+            arrs.append(arr)
+            labels.append(label)
+        ann = Ann(arrs, labels, n_h=2)  # Create Ann with these train_examples and labels
+        # L-1 matrices of partial derivatives for first example
+        J = ann.backward_batch(lam=lam_test, batch=1)  # Use full-batch for gradient descent
+        T_original = copy.deepcopy(ann.Thetas)
+         
+        for l in range(0, ann.L - 1):
+            shape_J = J[l].shape
+            eps = 0.0001  # epsilon for a numerical approximation of the gradient
+            a = random.sample(range(0, shape_J[0]), 2)
+            b = random.sample(range(0, shape_J[1]), 2)
+            for i in a:
+                for j in b:
+                    T_e = np.zeros(shape_J)  # Matrix of zeros
+                    T_e[i][j] = eps
+                    ann.Thetas[l] = T_original[l] + T_e
+                    cost_e = ann.cost(lam=lam_test)  # Cost at Theta + eps
+                    ann.Thetas[l] = T_original[l] - T_e
+                    cost_minus_e = ann.cost(lam=lam_test)  # Cost at Theta - eps
+                    P = (cost_e - cost_minus_e) / (2 * eps)  # Numerical approximation
+                    J_ij = J[l].item(i, j)  # Backpropagation derivation
+                     
+                    # print(P, '\t', J_ij, '\t', abs(P - J_ij), (l, i, j))
+                     
+                    # if (P < 0 and J_ij > 0 or P > 0 and J_ij < 0):
+                    #    self.fail()
+                     
+                    self.assertAlmostEqual(P, J_ij, delta=0.001)
+                    ann.Thetas = copy.deepcopy(T_original)
+ 
+    @timeit
+    def test_9(self):
+        # function 1 (XOR function) on 1 hidden layers
+        arrs = []
+        arrs.append([0, 0])
+        arrs.append([0, 1])
+        arrs.append([1, 0])
+        arrs.append([1, 1])
+        labels = []
+        labels.append('false')
+        labels.append('true')
+        labels.append('true')
+        labels.append('false') 
+        ann = Ann(arrs, labels, n_h=1)
+        # Train and save model
+        model = ann.train()[0][0]  # Take the first model from the list of models in the tuple
+        ann.validate_train()
+        # Check to see if train_accuracy is over 90%
+        self.assertTrue(ann.train_accuracy() > 0.9)
+         
+        # Load the trained model into a new neural network
+        ann_from_model = Ann(model)
+        # Evaluate some vectors using this neural network initialized only with a model
+        self.assertEqual(ann_from_model.h_by_class(arrs[0]), 'false')
+        self.assertEqual(ann_from_model.h_by_class(arrs[1]), 'true')
+        x = [1.1, 0.9]
+        self.assertEqual(ann_from_model.h_by_class(x), 'false')
+ 
+        # function 2 on 2 hidden layers
+        arrs2 = []
+        arrs2.append([1, 1])
+        arrs2.append([2, 2])
+        arrs2.append([1, 3])
+        arrs2.append([2, 10])
+        arrs2.append([1, -1])
+        arrs2.append([-2, -2])
+        arrs2.append([1, -3])
+        arrs2.append([-2, -10])
+        labels2 = []
+        labels2.append('false')
+        labels2.append('false')
+        labels2.append('false')
+        labels2.append('false')
+        labels2.append('true')
+        labels2.append('true')
+        labels2.append('true')
+        labels2.append('true') 
+        ann = Ann(arrs2, labels2, n_h=2)
+        model2 = ann.train()[0][0]
+        ann.validate_train()
+         
+        # Load the second model
+        ann_from_model = Ann(model2)
+        # Evaluate some vectors using this neural network initialized only with a model
+        self.assertEqual(ann_from_model.h_by_class(arrs2[0]), 'false')
+        self.assertEqual(ann_from_model.h_by_class(arrs2[len(arrs2) - 1]), 'true')
+        x = [1, -5]
+        self.assertEqual(ann_from_model.h_by_class(x), 'true')
+         
+        # Load the first model again
+        ann_from_model = Ann(model)
+        # Evaluate some vectors using this neural network initialized only with a model
+        self.assertEqual(ann_from_model.h_by_class(arrs[0]), 'false')
+        self.assertEqual(ann_from_model.h_by_class(arrs[1]), 'true')
+        x = [1.1, 0.9]
+        self.assertEqual(ann_from_model.h_by_class(x), 'false')
+         
+        # Try pickling our model into a sister folder
+        model_name = model.name
+        directory = '../Ann-models'
+        path_to_file = directory + '/' + model_name
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        pickle.dump(model, open(path_to_file, 'wb'))
+         
+        # Try unpickling our model
+        unpickled_model = pickle.load(open(path_to_file, 'rb'))
+        # Load unpickled model and test
+        ann_from_pickle = Ann(unpickled_model)
+        # Evaluate some vectors using this neural network initialized only with a model
+        self.assertEqual(ann_from_pickle.h_by_class(arrs[0]), 'false')
+        self.assertEqual(ann_from_pickle.h_by_class(arrs[1]), 'true')
+        x = [1.1, 0.9]
+        self.assertEqual(ann_from_pickle.h_by_class(x), 'false')
+     
+    @timeit
+    def test_10(self):
+        '''Creates a fake data-set with points labeled 'yes' around origin and points labeled 'no' outside'''
+        arrs = []
+        labels = []
+        '''Points about the origin (located in a box of length 16 centered at origin)'''
+        for i in range(0, 100):
+            arr = [random.randint(0, 8) * np.sign(random.random() - 0.5) for x in range(0, 2)]
+            label = 'yes'
+            arrs.append(arr)
+            labels.append(label)
+        '''Points outside the box'''
+        for i in range(0, 100):
+            arr = [random.randint(10, 20) * np.sign(random.random() - 0.5) for x in range(0, 2)]
+            label = 'no'
+            arrs.append(arr)
+            labels.append(label)
+        '''Add some noise'''
+        for i in range(0, 10):
+            arr = [random.randint(0, 8) * np.sign(random.random() - 0.5) for x in range(0, 2)]
+            label = 'no'  # Note: this is artificially misclassified
+            arrs.append(arr)
+            labels.append(label)
+        for i in range(0, 10):
+            arr = [random.randint(10, 20) * np.sign(random.random() - 0.5) for x in range(0, 2)]
+            label = 'yes'  # Note: this is artificially misclassified
+            arrs.append(arr)
+            labels.append(label)
+             
+        ann = Ann(arrs, labels, n_h=2)
+        (models, test_accuracies, test_costs) = ann.train()
+         
+        best_test_accuracy = 0
+        best_i = -1
+        for i in range(0, len(test_accuracies)):
+            if (test_accuracies[i] > best_test_accuracy):
+                best_test_accuracy = test_accuracies[i]
+                best_i = i
+                 
+        if (best_i > -1):
+            model_name = models[i].name
+            directory = '../Ann-models'
+            path_to_file = directory + '/' + model_name
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            pickle.dump(models[i], open(path_to_file, 'wb'))
+        else:
+            print('Error!')
     
 if __name__ == "__main__":
     Ann.init_logger('debug')

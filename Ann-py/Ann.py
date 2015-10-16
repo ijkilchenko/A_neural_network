@@ -273,9 +273,9 @@ class Ann(object):
     
     def train(self, **kwargs):
         # Default optimization hyperparameters
-        it = 500  # Maximum number of iterations
-        tol = 0.00001  # Stopping tolerance (with respect to decreasing cost function)
-        step = 0.01  # Gradient descent step size
+        it = 3000  # Maximum number of iterations
+        tol = 0.0001  # Stopping tolerance (with respect to decreasing cost function)
+        step = 2  # Gradient descent step size
         batch_size = 1  # mini_batch size (1 is using all examples) 
         if ('it' in kwargs.keys()):
             it = kwargs['it']
@@ -366,10 +366,10 @@ class Ann(object):
             cost_after = self.cost(lam=lam)
             cost_before = cost_after
             # After the first 100 iterations, check for stopping tolerance condition
-            if (count == 10):
-                # If the average cost over the last 10 iterations is within tol, then stop
-                if (abs(sum(last_100_costs) / len(last_100_costs) - cost_after) < tol):
-                    break                    
+#             if (count == 10):
+#                 # If the average cost over the last 10 iterations is within tol, then stop
+#                 if (abs(sum(last_100_costs) / len(last_100_costs) - cost_after) < tol):
+#                     break                    
                     
         logger.info('\tFinal cost: ' + str(cost_after) + ' (after ' + str(i + 1) + ' iterations)')
         
