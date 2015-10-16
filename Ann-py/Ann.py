@@ -3,6 +3,19 @@ import numpy.matlib as mp
 import math
 import random
 import datetime
+import time
+import logging
+
+logger = logging.getLogger(__name__)
+
+def timeit(method):
+    def timed(*args, **kw):
+        t_start = time.time()
+        result = method(*args, **kw)
+        t_end = time.time()
+        logger.debug('%s took %2.2f sec' % (method.__name__, t_end - t_start))
+        return result
+    return timed
 
 class Example(object):
     '''(Numeric) array and label class (for convenience)'''    
