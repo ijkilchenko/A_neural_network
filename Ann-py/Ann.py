@@ -175,6 +175,18 @@ class Ann(object):
             for l in range(0, self.L - 1):
                 S += np.sum(np.multiply(self.Thetas[l], self.Thetas[l]))                                       
         return -cost / len(self.train_examples) + S * lam / (2 * len(self.train_examples))
+
+    def validate_train(self):
+        '''Just logger.infos all train examples (vectors) and their classification by the neural network and their expected classification'''
+        for ex in self.train_examples:
+            logger.info(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
+        return self.train_accuracy()
+    
+    def validate_test(self):
+        '''Does what validate_train does but on the test_examples'''
+        for ex in self.test_examples:
+            logger.info(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
+        return self.test_accuracy()
     
     def train_accuracy(self):
         '''Returns a percentage of correctly classified train examples by neural network'''
@@ -262,11 +274,11 @@ class Ann(object):
             tol = kwargs['tol']
         if ('step' in kwargs.keys()):
             step = kwargs['step']        
-        if ('lam' in kwargs.keys() or len(self.test_examples) == 0):
-            if (len(kwargs.keys()) == 0):
-                lam = 0
-            else:
+        if (len(self.test_examples) == 0):
+            if ('lam' in kwargs.keys()):
                 lam = kwargs['lam']
+            else:
+                lam = 0
             # If there are no test examples, just set lam = 0 and do not regularize
             print('\n')
             print('Starting train accuracy ' + str(self.train_accuracy()))

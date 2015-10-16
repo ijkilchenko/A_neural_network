@@ -449,7 +449,7 @@ class Test(unittest.TestCase):
         labels.append('true')
         labels.append('false') 
         ann = Ann(arrs, labels, n_h=5)
-        ann.train(it=1000)
+        ann.train()
         ann.validate_train()
         # Check to see if train_accuracy is over 90%
         self.assertTrue(ann.train_accuracy() > 0.9)
