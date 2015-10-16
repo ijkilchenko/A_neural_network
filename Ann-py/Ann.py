@@ -3,6 +3,19 @@ import numpy.matlib as mp
 import math
 import random
 import datetime
+import time
+import logging
+
+logger = logging.getLogger(__name__)
+
+def timeit(method):
+    def timed(*args, **kw):
+        t_start = time.time()
+        result = method(*args, **kw)
+        t_end = time.time()
+        logger.debug('%s took %2.2f sec' % (method.__name__, t_end - t_start))
+        return result
+    return timed
 
 class Example(object):
     '''(Numeric) array and label class (for convenience)'''    
@@ -28,6 +41,7 @@ class Model(object):
 
 class Ann(object):
     '''Feed-forward neural network with arbitrary architecture'''    
+    @timeit
     def __init__(self, *args, **kwargs):
         self.min = 2 * 10 ** (-308)  # Use this as minimum value (without underflow) bigger than 0
         s = []  # Architecture vector is initially undefined
@@ -59,7 +73,7 @@ class Ann(object):
                 t = args
                 (arrs, labels) = (t[0], t[1])
                 if (len(arrs) != len(labels)):
-                    print('Number of train_examples do not match the number of labels!')
+                    logger.info('Number of train_examples do not match the number of labels!')
                     return
                 else:
                     '''Makes an array for each label (assumes string labels)'''
@@ -169,7 +183,7 @@ class Ann(object):
     
     def test_accuracy(self):
         if (len(self.test_examples) < 1):
-            print('There are 0 test examples!')
+            logger.info('There are 0 test examples!')
         else:
             return self.accuracy(self.test_examples)
     
@@ -189,15 +203,15 @@ class Ann(object):
         return num_correct / len(examples)
     
     def validate_train(self):
-        '''Just prints all train examples (vectors) and their classification by the neural network and their expected classification'''
+        '''Just logger.infos all train examples (vectors) and their classification by the neural network and their expected classification'''
         for ex in self.train_examples:
-            print(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
+            logger.info(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
         return self.train_accuracy()
     
     def validate_test(self):
         '''Does what validate_train does but on the test_examples'''
         for ex in self.test_examples:
-            print(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
+            logger.info(str(ex.arr) + ' -> ' + '(hypothesis: ' + str(self.h_by_class(ex.arr)) + ', expectation: ' + str(ex.label) + ')')
         return self.test_accuracy()
     
     def h_by_class(self, x):
@@ -225,11 +239,11 @@ class Ann(object):
         # Let's choose lam (regularization constant) and a batch size (Note: 0.1 means the batch size is 10 %)
         if (len(kwargs.keys()) == 0):
             lam = 0
-            batch_size = 0.5
+            batch_size = 1
         else:
             lam = kwargs['lam']
-            if ('batch' in kwargs.keys()):
-                batch_size = kwargs['batch']
+            if ('batch_size' in kwargs.keys()):
+                batch_size = kwargs['batch_size']
             else:
                 batch_size = 0.5
         
@@ -262,28 +276,31 @@ class Ann(object):
         it = 500  # Maximum number of iterations
         tol = 0.00001  # Stopping tolerance (with respect to decreasing cost function)
         step = 0.01  # Gradient descent step size
+        batch_size = 1  # mini_batch size (1 is using all examples) 
         if ('it' in kwargs.keys()):
             it = kwargs['it']
         if ('tol' in kwargs.keys()):
             tol = kwargs['tol']
         if ('step' in kwargs.keys()):
-            step = kwargs['step']        
-        if ('lam' in kwargs.keys() or len(self.test_examples) == 0):
-            if (len(kwargs.keys()) == 0):
-                lam = 0
-            else:
+            step = kwargs['step']    
+        if ('batch_size' in kwargs.keys()):
+            batch_size = kwargs['batch_size']    
+        if (len(self.test_examples) == 0):
+            if ('lam' in kwargs.keys()):
                 lam = kwargs['lam']
+            else:
+                lam = 0
             # If there are no test examples, just set lam = 0 and do not regularize
-            print('\n')
-            print('Using lambda=' + str(lam))
+            logger.info('\n')
+            logger.info('Using lambda=' + str(lam))
             if (len(self.test_examples) > 0):
-                print('Starting test accuracy=' + str(self.test_accuracy()))
-            print('Starting train accuracy ' + str(self.train_accuracy()))
-            model = self.train_with_lam(lam, it=it, tol=tol, step=step)
+                logger.info('Starting test accuracy=' + str(self.test_accuracy()))
+            logger.info('Starting train accuracy ' + str(self.train_accuracy()))
+            model = self.train_with_lam(lam, it=it, tol=tol, step=step, batch_size=batch_size)
             if (len(self.test_examples) > 0):
-                print('Ending test accuracy=' + str(self.test_accuracy()))
-            print('Ending train accuracy ' + str(self.train_accuracy()))
-            print('\n')
+                logger.info('Ending test accuracy=' + str(self.test_accuracy()))
+            logger.info('Ending train accuracy ' + str(self.train_accuracy()))
+            logger.info('\n')
             
             return ([model], [self.train_accuracy()], [self.cost(lam=lam)])
         else:
@@ -298,18 +315,18 @@ class Ann(object):
             
             steps = list(np.linspace(lam_min, lam_max, lam_num))
             for lam in steps:
-                print('\n')
-                print('Setting lambda=' + str(lam))
-                print('Starting test accuracy=' + str(self.test_accuracy()))
-                print('Starting train accuracy ' + str(self.train_accuracy()))
+                logger.info('\n')
+                logger.info('Setting lambda=' + str(lam))
+                logger.info('Starting test accuracy=' + str(self.test_accuracy()))
+                logger.info('Starting train accuracy ' + str(self.train_accuracy()))
                 model = self.train_with_lam(lam, it=it, tol=tol, step=step)
                 models.append(model)
                 t = self.test_accuracy()
-                print('Ending test accuracy=' + str(t))
-                print('Ending train accuracy ' + str(self.train_accuracy()))
+                logger.info('Ending test accuracy=' + str(t))
+                logger.info('Ending train accuracy ' + str(self.train_accuracy()))
                 test_accuracies.append(t)
                 test_costs.append(self.cost(lam=lam))
-                print('\n')
+                logger.info('\n')
                 
             return (models, test_accuracies, test_costs)
                 
@@ -318,11 +335,13 @@ class Ann(object):
         it = kwargs['it']
         tol = kwargs['tol']
         step = kwargs['step']
+        batch_size = kwargs['batch_size']
         mum = 0.1
         
-        print('\tMaximum number of iterations: ' + str(it))
-        print('\tTolerance: ' + str(tol))
-        print('\tGradient descent step size: ' + str(step))
+        logger.info('\tMaximum number of iterations: ' + str(it))
+        logger.info('\tTolerance: ' + str(tol))
+        logger.info('\tGradient descent step size: ' + str(step))
+        logger.info('\tBatch size : ' + str(batch_size))
         
         last_100_costs = []
         count = 0
@@ -335,11 +354,11 @@ class Ann(object):
                 last_100_costs = last_100_costs[1:]
             last_100_costs.append(cost_before)
             if (i % 5 == 0 and i % 20 != 0):
-                print('\tIteration ' + str(i) + '. Cost: ' + str(cost_before))
+                logger.info('\tIteration ' + str(i) + '. Cost: ' + str(cost_before))
             elif (i % 20 == 0):
-                print('\tIteration ' + str(i) + '. Cost: ' + str(cost_before) + '. Train-accuracy: ' + str(self.train_accuracy()))
+                logger.info('\tIteration ' + str(i) + '. Cost: ' + str(cost_before) + '. Train-accuracy: ' + str(self.train_accuracy()))
             
-            D = self.backward_batch(lam=lam)
+            D = self.backward_batch(lam=lam, batch_size=batch_size)
             for l in range(0, self.L - 1):
                 self.Thetas[l] = self.Thetas[l] - step * D[l] - mum * D_last[l]  # Take a step down the gradient (of the cost function) bias towards momentum
             D_last = D
@@ -352,7 +371,7 @@ class Ann(object):
                 if (abs(sum(last_100_costs) / len(last_100_costs) - cost_after) < tol):
                     break                    
                     
-        print('\tFinal cost: ' + str(cost_after) + ' (after ' + str(i + 1) + ' iterations)')
+        logger.info('\tFinal cost: ' + str(cost_after) + ' (after ' + str(i + 1) + ' iterations)')
         
         model = Model(self.Thetas, self.classes)
         return model
@@ -415,4 +434,3 @@ class Ann(object):
             Js.append(P)
         
         return Js  # Returns L-1 Jacobian matrices (matrices of partial derivatives)
-

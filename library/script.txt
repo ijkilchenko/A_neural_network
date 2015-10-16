@@ -1,0 +1,21 @@
+cat
+
+for (var i = 0; i < cats.length; i++) {
+if (cats[i].hasAttribute("data-src")){
+var a = document.createElement("a");
+a.setAttribute("href", cats[i].getAttribute("data-src"));
+a.setAttribute("download", "img.png");
+a.click();
+a.remove();
+}
+}
+
+var cats = $x("//*/div[@class='rg_di rg_el']/a/img")
+
+for (var i = 14; i < 500; i++) {
+var a = document.createElement("a");
+a.setAttribute("href", cats[i].getAttribute("data-src"));
+a.setAttribute("download", "img.png");
+a[0].click();
+a.remove();
+}
